@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2>👤 Mi Perfil</h2>
+    <hr>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <p><strong>Nombre:</strong> {{ usuario.nombre_completo }}</p>
+
+            <p><strong>Correo:</strong> {{ usuario.email }}</p>
+
+            <p><strong>Área:</strong> {{ usuario.area }}</p>
+
+            <p><strong>Teléfono:</strong> {{ usuario.telefono or 'No disponible' }}</p>
+
+            <p><strong>Rol:</strong> {{ usuario.rol_nombre }}</p>
+
+            <p><strong>Estado:</strong> 
+                {% if usuario.activo %}
+                    <span class="badge bg-success">Activo</span>
+                {% else %}
+                    <span class="badge bg-danger">Inactivo</span>
+                {% endif %}
+            </p>
+
+            <!--  CORRECCIÓN AQUÍ -->
+            <p><strong>Miembro desde:</strong> 
+                {{ usuario.fecha_registro[:10] if usuario.fecha_registro else 'No disponible' }}
+            </p>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

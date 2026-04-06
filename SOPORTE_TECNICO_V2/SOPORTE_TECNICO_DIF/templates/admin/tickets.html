@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Tickets{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">
+        <i class="fas fa-list"></i> Gestión de Tickets
+    </h1>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('admin.tickets') }}" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Estado</label>
+                    <select name="estado" class="form-select">
+                        <option value="">Todos</option>
+                        {% for estado in estados %}
+                        <option value="{{ estado.nombre }}" {% if estado_filtro == estado.nombre %}selected{% endif %}>
+                            {{ estado.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Prioridad</label>
+                    <select name="prioridad" class="form-select">
+                        <option value="">Todas</option>
+                        {% for prioridad in prioridades %}
+                        <option value="{{ prioridad.nombre }}" {% if prioridad_filtro == prioridad.nombre %}selected{% endif %}>
+                            {{ prioridad.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de tickets -->
+    <div class="card">
+        <div class="card-body">
+            {% if tickets %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Folio</th>
+                            <th>Usuario</th>
+                            <th>Área</th>
+                            <th>Título</th>
+                            <th>Tipo</th>
+                            <th>Prioridad</th>
+                            <th>Estado</th>
+                            <th>Técnico</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in tickets %}
+                        <tr>
+                            <td><strong>{{ ticket.folio }}</strong></td>
+                            <td>{{ ticket.nombre_usuario }}</td>
+                            <td>{{ ticket.area_usuario }}</td>
+                            <td>{{ ticket.titulo[:40] }}...</td>
+                            <td>{{ ticket.tipo_problema or 'N/A' }}</td>
+                            <td>
+                                <span class="badge" style="background-color: {{ ticket.color_prioridad }};">
+                                    {{ ticket.prioridad }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge" style="background-color: {{ ticket.color_estado }};">
+                                    {{ ticket.estado }}
+                                </span>
+                            </td>
+                            <td>{{ ticket.nombre_tecnico or 'Sin asignar' }}</td>
+                            <td>{{ ticket.fecha_creacion[:16] }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.ver_ticket', id_ticket=ticket.id_ticket) }}" 
+                                   class="btn btn-sm btn-primary">
+                                    <i class="fas fa-cogs"></i> Gestionar
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No hay tickets que coincidan con los filtros seleccionados.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

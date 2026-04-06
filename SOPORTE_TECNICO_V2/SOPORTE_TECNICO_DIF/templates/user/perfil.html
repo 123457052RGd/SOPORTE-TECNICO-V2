@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Mi Perfil{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="d-flex align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-person-circle me-2"></i>Mi Perfil</h2>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+
+        <!-- Foto de perfil -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-primary text-white">
+            <i class="bi bi-camera me-1"></i> Foto de perfil
+          </div>
+          <div class="card-body text-center">
+            {% if usuario and usuario.foto %}
+              <img src="{{ url_for('static', filename='uploads/' ~ usuario.foto) }}"
+                   class="rounded-circle mb-3 border border-3 border-primary"
+                   width="120" height="120" style="object-fit:cover;" id="preview-foto" alt="Foto">
+            {% else %}
+              <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center
+                          justify-content-center mb-3"
+                   style="width:120px;height:120px;font-size:3rem;" id="avatar-placeholder">
+                {{ (usuario.nombre_completo or session.get('nombre','U'))[0].upper() }}
+              </div>
+              <img src="" class="rounded-circle mb-3 border border-3 border-primary d-none"
+                   width="120" height="120" style="object-fit:cover;" id="preview-foto" alt="">
+            {% endif %}
+            <div>
+              <label class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-upload me-1"></i> Cambiar foto
+                <input type="file" name="foto" id="inputFoto" accept="image/*" class="d-none">
+              </label>
+              <p class="text-muted small mt-2 mb-0">PNG, JPG, WEBP — máx. 16 MB</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Datos personales -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-primary text-white">
+            <i class="bi bi-person me-1"></i> Datos personales
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Nombre completo <span class="text-danger">*</span></label>
+                <input type="text" name="nombre" class="form-control" required
+                       value="{{ usuario.nombre if usuario else '' }}">
+                <div class="invalid-feedback">Ingresa tu nombre.</div>
+              </div>
+
+              {% if usuario and usuario.apellido %}
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Apellido</label>
+                <input type="text" name="apellido" class="form-control"
+                       value="{{ usuario.apellido if usuario else '' }}">
+              </div>
+              {% endif %}
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Correo electrónico</label>
+                <input type="email" name="email" class="form-control"
+                       value="{{ usuario.email if usuario else '' }}">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Teléfono</label>
+                <input type="text" name="telefono" class="form-control"
+                       value="{{ usuario.telefono if usuario else '' }}"
+                       placeholder="Ej. 55 1234 5678">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Área / Departamento</label>
+                <input type="text" name="area" class="form-control"
+                       value="{{ usuario.area if usuario else '' }}">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Rol</label>
+                <input type="text" class="form-control bg-light"
+                       value="{{ usuario.rol_nombre if usuario else '' }}" disabled>
+                <small class="text-muted">Solo el administrador puede cambiar el rol.</small>
+              </div>
+
+              {% if usuario and usuario.fecha_registro %}
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Miembro desde</label>
+                <input type="text" class="form-control bg-light"
+                       value="{{ usuario.fecha_registro | string | truncate(10, True, '') }}" disabled>
+              </div>
+              {% endif %}
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Cambiar contraseña -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-warning text-dark">
+            <i class="bi bi-lock me-1"></i> Cambiar contraseña
+            <small class="ms-2 text-muted">(vacío = sin cambios)</small>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Nueva contraseña</label>
+                <div class="input-group">
+                  <input type="password" name="password_new" id="pwNew"
+                         class="form-control" placeholder="Mínimo 6 caracteres" minlength="6">
+                  <button class="btn btn-outline-secondary" type="button"
+                          onclick="togglePw('pwNew',this)">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Confirmar contraseña</label>
+                <div class="input-group">
+                  <input type="password" name="password_confirm" id="pwConf"
+                         class="form-control" placeholder="Repite la contraseña">
+                  <button class="btn btn-outline-secondary" type="button"
+                          onclick="togglePw('pwConf',this)">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+                <div id="pw-match-msg" class="small mt-1"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex gap-2 justify-content-end">
+          <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Cancelar
+          </a>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save me-1"></i> Guardar cambios
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('inputFoto').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const preview     = document.getElementById('preview-foto');
+    const placeholder = document.getElementById('avatar-placeholder');
+    preview.src = ev.target.result;
+    preview.classList.remove('d-none');
+    if (placeholder) placeholder.classList.add('d-none');
+  };
+  reader.readAsDataURL(file);
+});
+
+function togglePw(id, btn) {
+  const input = document.getElementById(id);
+  const isText = input.type === 'text';
+  input.type = isText ? 'password' : 'text';
+  btn.innerHTML = isText ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+}
+
+const pwNew = document.getElementById('pwNew');
+const pwConf = document.getElementById('pwConf');
+const msg = document.getElementById('pw-match-msg');
+
+function checkPw() {
+  if (!pwNew.value && !pwConf.value) { msg.textContent = ''; return; }
+  if (pwNew.value === pwConf.value) {
+    msg.innerHTML = '<span class="text-success">✅ Coinciden</span>';
+  } else {
+    msg.innerHTML = '<span class="text-danger">❌ No coinciden</span>';
+  }
+}
+pwNew.addEventListener('input', checkPw);
+pwConf.addEventListener('input', checkPw);
+
+document.querySelector('form').addEventListener('submit', e => {
+if (pwNew.value && pwNew.value !== pwConf.value) {
+    e.preventDefault();
+    checkPw();
+    pwConf.focus();
+}
+});
+</script>
+{% endblock %}

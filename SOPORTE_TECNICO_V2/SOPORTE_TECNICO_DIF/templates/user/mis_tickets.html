@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Tickets{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">
+        <i class="fas fa-list"></i> Mis Tickets
+    </h1>
+
+    <div class="card">
+        <div class="card-body">
+            {% if tickets %}
+            <div class="table-responsive">
+                <table class="table table-hover" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Folio</th>
+                            <th>Título</th>
+                            <th>Tipo</th>
+                            <th>Prioridad</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in tickets %}
+                        <tr>
+                            <td><strong>{{ ticket.folio }}</strong></td>
+                            <td>{{ ticket.titulo }}</td>
+                            <td>{{ ticket.tipo_problema or 'N/A' }}</td>
+                            <td>
+                                <span class="badge" style="background-color: {{ ticket.color_prioridad }};">
+                                    {{ ticket.prioridad }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge" style="background-color: {{ ticket.color_estado }};">
+                                    {{ ticket.estado }}
+                                </span>
+                            </td>
+                            <td>{{ ticket.fecha_creacion[:16] }}</td>
+                            <td>
+                                <a href="{{ url_for('user.ver_ticket', id_ticket=ticket.id_ticket) }}" 
+                                   class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No tienes tickets registrados. 
+                <a href="{{ url_for('user.nuevo_ticket') }}">Crea tu primer ticket aquí</a>.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

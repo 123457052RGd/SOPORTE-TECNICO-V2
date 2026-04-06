@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Administrador{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+
+  <!-- ENCABEZADO + RELOJ -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <h1 class="mb-0 fw-bold">
+        <i class="fas fa-chart-line me-2"></i>Dashboard Administrativo
+      </h1>
+      <small class="text-muted">Sistema ITIL Helpdesk — DIF</small>
+    </div>
+
+    <div class="reloj-widget">
+      <div id="reloj-hora">00:00:00</div>
+      <div id="reloj-fecha"></div>
+      <div id="reloj-horario" class="horario-badge">Cargando...</div>
+    </div>
+  </div>
+
+  <!-- FILA 1: TICKETS -->
+  <div class="row g-3 mb-3">
+
+    <div class="col-6 col-md-2">
+      <div class="stat-card" style="background:linear-gradient(135deg,#00bcd4,#0097a7);">
+        <div class="stat-icon"><i class="fas fa-ticket-alt"></i></div>
+        <div class="stat-num">{{ stats.total }}</div>
+        <div class="stat-label">Total Tickets</div>
+      </div>
+    </div>
+
+    {% for estado in stats.por_estado %}
+    <div class="col-6 col-md-2">
+      <div class="stat-card" style="background:linear-gradient(135deg,{{ estado.color }},{{ estado.color }}cc);">
+        <div class="stat-num">{{ estado.cantidad }}</div>
+        <div class="stat-label">{{ estado.nombre }}</div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <div class="col-6 col-md-2">
+      <div class="stat-card" style="background:linear-gradient(135deg,#7b1fa2,#6a1b9a);">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-num">{{ total_usuarios }}</div>
+        <div class="stat-label">Usuarios</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-2">
+      <div class="stat-card" style="background:linear-gradient(135deg,#1565c0,#0d47a1);">
+        <div class="stat-icon"><i class="fas fa-desktop"></i></div>
+        <div class="stat-num">{{ total_equipos }}</div>
+        <div class="stat-label">Equipos</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FILA 2: GRÁFICAS -->
+  <div class="row g-3 mb-3">
+
+    <div class="col-md-5">
+      <div class="card h-100">
+        <div class="card-header">
+          <i class="fas fa-chart-pie me-2"></i>Tickets por Prioridad
+        </div>
+        <div class="card-body d-flex align-items-center justify-content-center">
+          <canvas id="chartPrioridad" style="max-height:220px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+      <div class="card h-100">
+        <div class="card-header">
+          <i class="fas fa-chart-bar me-2"></i>Tickets por Tipo de Problema
+        </div>
+        <div class="card-body">
+          <canvas id="chartTipo" style="max-height:220px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FILA 3: TICKETS RECIENTES -->
+  <div class="row g-3">
+    <div class="col-12">
+
+      <div class="card">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>
+            <i class="fas fa-clock me-2"></i>Tickets Recientes
+          </span>
+          <a href="{{ url_for('admin.tickets') }}" class="btn btn-sm btn-light">
+            Ver todos <i class="fas fa-arrow-right ms-1"></i>
+          </a>
+        </div>
+
+        <div class="card-body p-0">
+
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+
+              <thead>
+                <tr>
+                  <th>Folio</th>
+                  <th>Usuario</th>
+                  <th>Área</th>
+                  <th>Título</th>
+                  <th>Prioridad</th>
+                  <th>Estado</th>
+                  <th>Fecha y Hora</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for ticket in tickets_recientes %}
+                <tr>
+
+                  <td><strong>{{ ticket.folio }}</strong></td>
+                  <td>{{ ticket.nombre_usuario }}</td>
+
+                  <td>
+                    <span class="badge bg-secondary">
+                      {{ ticket.area_usuario }}
+                    </span>
+                  </td>
+
+                  <td>
+                    {{ ticket.titulo[:45] }}
+                    {% if ticket.titulo|length > 45 %}…{% endif %}
+                  </td>
+
+                  <td>
+                    <span class="badge" style="background:{{ ticket.color_prioridad }};">
+                      {{ ticket.prioridad }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <span class="badge" style="background:{{ ticket.color_estado }};">
+                      {{ ticket.estado }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <small>
+                      <i class="fas fa-calendar-alt me-1 text-muted"></i>
+                      {{ ticket.fecha_creacion[:10] }}<br>
+                      <i class="fas fa-clock me-1 text-muted"></i>
+                      <strong>
+                        {{ ticket.fecha_creacion[11:19] if ticket.fecha_creacion|length > 10 else '—' }}
+                      </strong>
+                    </small>
+                  </td>
+
+                  <td>
+                    <a href="{{ url_for('admin.ver_ticket', id_ticket=ticket.id_ticket) }}" class="btn btn-sm btn-primary">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                  </td>
+
+                </tr>
+                {% endfor %}
+              </tbody>
+
+            </table>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="text-center mt-4 py-3 border-top text-muted small">
+    ITIL Helpdesk - Sistema DIF de Soporte Técnico © 2026
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // ================= RELOJ =================
+    const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const HORA_INICIO = 9, HORA_FIN = 21;
+
+    function actualizarReloj() {
+        const ahora = new Date();
+        const h = ahora.getHours(), m = ahora.getMinutes(), s = ahora.getSeconds();
+
+        const hora = document.getElementById('reloj-hora');
+        const fecha = document.getElementById('reloj-fecha');
+        const badge = document.getElementById('reloj-horario');
+
+        if (!hora || !fecha || !badge) return;
+
+        hora.textContent =
+            String(h).padStart(2,'0') + ':' +
+            String(m).padStart(2,'0') + ':' +
+            String(s).padStart(2,'0');
+
+        fecha.textContent =
+            DIAS[ahora.getDay()] + ', ' +
+            ahora.getDate() + ' de ' +
+            MESES[ahora.getMonth()] + ' de ' +
+            ahora.getFullYear();
+
+        if (h >= HORA_INICIO && h < HORA_FIN) {
+            badge.textContent = '🟢 Servicio activo';
+            badge.className = 'horario-badge activo';
+        } else {
+            badge.textContent = '🔴 Fuera de horario';
+            badge.className = 'horario-badge inactivo';
+        }
+    }
+
+    actualizarReloj();
+    setInterval(actualizarReloj, 1000);
+
+
+    // ================= GRÁFICA PRIORIDAD =================
+    const ctx1 = document.getElementById('chartPrioridad');
+
+    if (ctx1) {
+        new Chart(ctx1, {
+            type: 'doughnut',
+            data: {
+                labels: {{ stats.por_prioridad | map(attribute='nombre') | list | tojson }},
+                datasets: [{
+                    data: {{ stats.por_prioridad | map(attribute='cantidad') | list | tojson }},
+                    backgroundColor: {{ stats.por_prioridad | map(attribute='color') | list | tojson }},
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+    }
+
+
+    // ================= GRÁFICA TIPO =================
+    const ctx2 = document.getElementById('chartTipo');
+
+    if (ctx2) {
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: {{ stats.por_tipo | map(attribute='nombre') | list | tojson }},
+                datasets: [{
+                    label: 'Tickets',
+                    data: {{ stats.por_tipo | map(attribute='cantidad') | list | tojson }},
+                    backgroundColor: '#00bcd4',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+});
+</script>
+{% endblock %}

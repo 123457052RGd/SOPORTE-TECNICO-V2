@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Usuario{% endblock %}
+
+{% block content %}
+<div class="container px-3">
+
+  <!-- ENCABEZADO + RELOJ -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <h1 class="mb-0 fw-bold"><i class="fas fa-home me-2"></i>Mi Dashboard</h1>
+      <small class="text-muted">Bienvenido, {{ session.nombre }}</small>
+    </div>
+    <div class="reloj-widget">
+      <div id="reloj-hora">00:00:00</div>
+      <div id="reloj-fecha"></div>
+      <div id="reloj-horario" class="horario-badge">Cargando...</div>
+    </div>
+  </div>
+
+  <!-- TARJETAS ESTADÍSTICAS -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card" style="background:linear-gradient(135deg,#00bcd4,#0097a7);">
+        <div class="stat-icon"><i class="fas fa-ticket-alt"></i></div>
+        <div class="stat-num">{{ total_tickets }}</div>
+        <div class="stat-label">Total Tickets</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card" style="background:linear-gradient(135deg,#ffa726,#fb8c00);">
+        <div class="stat-icon"><i class="fas fa-folder-open"></i></div>
+        <div class="stat-num">{{ tickets_abiertos }}</div>
+        <div class="stat-label">Abiertos</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card" style="background:linear-gradient(135deg,#29b6f6,#0288d1);">
+        <div class="stat-icon"><i class="fas fa-spinner"></i></div>
+        <div class="stat-num">{{ tickets_proceso }}</div>
+        <div class="stat-label">En Proceso</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card" style="background:linear-gradient(135deg,#66bb6a,#43a047);">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-num">{{ tickets_resueltos }}</div>
+        <div class="stat-label">Resueltos</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTÓN NUEVO TICKET -->
+  <div class="mb-4">
+    <a href="{{ url_for('user.nuevo_ticket') }}" class="btn btn-primary btn-lg">
+      <i class="fas fa-plus-circle me-2"></i>Crear Nuevo Ticket
+    </a>
+  </div>
+
+  <!-- TICKETS RECIENTES -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="fas fa-list me-2"></i>Mis Tickets Recientes</span>
+      {% if tickets|length > 5 %}
+      <a href="{{ url_for('user.mis_tickets') }}" class="btn btn-sm btn-light">Ver todos</a>
+      {% endif %}
+    </div>
+    <div class="card-body p-0">
+      {% if tickets %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Folio</th>
+              <th>Título</th>
+              <th>Tipo</th>
+              <th>Prioridad</th>
+              <th>Estado</th>
+              <th><i class="fas fa-clock me-1"></i>Fecha y Hora</th>
+              <th>Ver</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ticket in tickets[:5] %}
+            <tr>
+              <td><strong>{{ ticket.folio }}</strong></td>
+              <td>{{ ticket.titulo }}</td>
+              <td>{{ ticket.tipo_problema or 'N/A' }}</td>
+              <td><span class="badge" style="background:{{ ticket.color_prioridad }};">{{ ticket.prioridad }}</span></td>
+              <td><span class="badge" style="background:{{ ticket.color_estado }};">{{ ticket.estado }}</span></td>
+              <td>
+                <small>
+                  <i class="fas fa-calendar-alt me-1 text-muted"></i>{{ ticket.fecha_creacion[:10] }}<br>
+                  <i class="fas fa-clock me-1 text-muted"></i><strong>{{ ticket.fecha_creacion[11:19] if ticket.fecha_creacion|length > 10 else '—' }}</strong>
+                </small>
+              </td>
+              <td>
+                <a href="{{ url_for('user.ver_ticket', id_ticket=ticket.id_ticket) }}" class="btn btn-sm btn-info">
+                  <i class="fas fa-eye"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-4 text-center">
+        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+        <p class="text-muted mb-3">No tienes tickets registrados todavía.</p>
+        <a href="{{ url_for('user.nuevo_ticket') }}" class="btn btn-primary">
+          <i class="fas fa-plus me-1"></i>Crear mi primer ticket
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const HORA_INICIO = 9, HORA_FIN = 21;
+
+function actualizarReloj() {
+  const ahora = new Date();
+  const h = ahora.getHours(), m = ahora.getMinutes(), s = ahora.getSeconds();
+  document.getElementById('reloj-hora').textContent =
+    String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  document.getElementById('reloj-fecha').textContent =
+    DIAS[ahora.getDay()] + ', ' + ahora.getDate() + ' de ' + MESES[ahora.getMonth()] + ' de ' + ahora.getFullYear();
+
+  const badge = document.getElementById('reloj-horario');
+  if (h >= HORA_INICIO && h < HORA_FIN) {
+    badge.textContent = '🟢 Servicio activo (9 am – 9 pm)';
+    badge.className = 'horario-badge activo';
+  } else {
+    badge.textContent = '🔴 Fuera de horario — regresa de 9 am a 9 pm';
+    badge.className = 'horario-badge inactivo';
+  }
+}
+actualizarReloj();
+setInterval(actualizarReloj, 1000);
+</script>
+{% endblock %}

@@ -1,0 +1,764 @@
+/* =============================================
+TEMA ITIL HELPDESK - COLORES PRINCIPALES
+   ============================================= */
+:root {
+    --primary-color: #00bcd4;      /* Cyan principal */
+    --primary-dark: #0097a7;       /* Cyan oscuro */
+    --primary-light: #26c6da;      /* Cyan claro */
+    --secondary-color: #37474f;    /* Gris oscuro */
+    --accent-color: #00acc1;       /* Accent cyan */
+    --text-dark: #263238;
+    --text-light: #546e7a;
+    --bg-light: #eceff1;
+    --white: #ffffff;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos generales */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+}
+
+main {
+    flex: 1;
+}
+
+/* =============================================
+NAVBAR MEJORADA - ESTILO ITIL
+   ============================================= */
+.navbar {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
+    box-shadow: 0 2px 10px var(--shadow);
+    padding: 0.5rem 1rem;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--white) !important;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+    transform: translateY(-2px);
+}
+
+.navbar-brand .logo-img {
+    height: 45px;
+    width: 45px;
+    background: var(--white);
+    border-radius: 8px;
+    padding: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-brand .brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.navbar-brand .brand-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.navbar-brand .brand-subtitle {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+
+.navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.95) !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    margin: 0 4px;
+}
+
+.navbar-nav .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.navbar-nav .nav-link i {
+    margin-right: 6px;
+}
+
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 4px 12px var(--shadow);
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.dropdown-item {
+    padding: 0.6rem 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-light);
+    color: var(--primary-color);
+    padding-left: 1.5rem;
+}
+
+/* Cards */
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    font-weight: bold;
+    border-top-left-radius: 10px !important;
+    border-top-right-radius: 10px !important;
+}
+
+/* Badges */
+.badge {
+    padding: 8px 12px;
+    border-radius: 5px;
+}
+
+/* Tablas */
+.table {
+    background: white;
+}
+
+.table thead {
+    background-color: #f8f9fa;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f1f3f5;
+    cursor: pointer;
+}
+
+/* Botones */
+.btn {
+    border-radius: 8px;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    border: none;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, #006064 100%);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef5350 0%, #e53935 100%);
+}
+
+/* Footer */
+.footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    margin-top: auto;
+}
+
+/* Timeline */
+.timeline {
+    position: relative;
+}
+
+.timeline-item {
+    padding-left: 30px;
+    padding-bottom: 20px;
+    border-left: 2px solid #dee2e6;
+}
+
+.timeline-item:last-child {
+    border-left: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #007bff;
+}
+
+/* Cards de estadísticas */
+.card.text-white h2, .card.text-white h5 {
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Login */
+.card.shadow-lg {
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
+}
+
+/* Alertas */
+.alert {
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.alert-success {
+    border-left-color: #28a745;
+}
+
+.alert-danger {
+    border-left-color: #dc3545;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+.alert-info {
+    border-left-color: #17a2b8;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card, .alert {
+    animation: fadeIn 0.5s ease;
+}
+
+/* =============================================
+   LOGIN PAGE - ESTILO ITIL HELPDESK
+   ============================================= */
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+    padding: 20px;
+}
+
+.login-card {
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 188, 212, 0.2);
+    overflow: hidden;
+    max-width: 450px;
+    width: 100%;
+    animation: fadeIn 0.6s ease;
+}
+
+.login-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    padding: 40px 30px;
+    text-align: center;
+    color: var(--white);
+}
+
+.login-logo {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: var(--white);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.login-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.login-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--white);
+}
+
+.login-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    font-weight: 400;
+}
+
+.login-body {
+    padding: 40px 30px;
+}
+
+.login-form .form-label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.login-form .form-control {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.login-form .form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.1);
+}
+
+.login-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    margin-top: 20px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    border: none;
+    color: var(--white);
+    transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 188, 212, 0.4);
+}
+
+.login-footer {
+    text-align: center;
+    padding: 20px 30px;
+    background-color: #fafafa;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.credentials-info {
+    background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);
+    border-left: 4px solid var(--primary-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.credentials-info h6 {
+    color: var(--primary-dark);
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.credentials-info small {
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .table {
+        font-size: 0.9rem;
+    }
+    
+    .btn {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+    }
+}
+
+/* Chart containers */
+canvas {
+    max-height: 300px;
+}
+
+/* Forms */
+.form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* Modal */
+.modal-content {
+    border-radius: 10px;
+}
+
+/* Opacity helper */
+.opacity-50 {
+    opacity: 0.5;
+}
+
+/* =============================================
+   CARDS Y COMPONENTES MEJORADOS
+   ============================================= */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px var(--shadow);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: var(--white);
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    border: none;
+}
+
+.card-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Cards de estadísticas */
+.stat-card {
+    border-radius: 12px;
+    padding: 1.5rem;
+    color: var(--white);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: translate(30%, -30%);
+}
+
+.stat-card h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0;
+}
+
+.stat-card h5 {
+    font-size: 1rem;
+    opacity: 0.95;
+    margin-bottom: 0;
+}
+
+/* Badges mejorados */
+.badge {
+    padding: 0.5rem 0.9rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+/* Tablas mejoradas */
+.table {
+    background: var(--white);
+}
+
+.table thead {
+    background: linear-gradient(135deg, #eceff1 0%, #cfd8dc 100%);
+}
+
+.table thead th {
+    border: none;
+    color: var(--text-dark);
+    font-weight: 600;
+    padding: 1rem;
+}
+
+.table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #e1f5fe;
+    cursor: pointer;
+}
+
+/* Alertas mejoradas */
+.alert {
+    border: none;
+    border-radius: 10px;
+    border-left: 4px solid;
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+.alert-success {
+    background-color: #e8f5e9;
+    border-left-color: #4caf50;
+    color: #2e7d32;
+}
+
+.alert-danger {
+    background-color: #ffebee;
+    border-left-color: #f44336;
+    color: #c62828;
+}
+
+.alert-warning {
+    background-color: #fff3e0;
+    border-left-color: #ff9800;
+    color: #e65100;
+}
+
+.alert-info {
+    background-color: #e1f5fe;
+    border-left-color: var(--primary-color);
+    color: #01579b;
+}
+
+/* Forms mejorados */
+.form-label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.1);
+}
+
+/* Timeline mejorada */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 25px;
+    border-left: 2px solid var(--primary-light);
+}
+
+.timeline-item:last-child {
+    border-left: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -7px;
+    top: 5px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(0, 188, 212, 0.2);
+}
+
+.timeline-content {
+    background: var(--white);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+/* Responsive mejoras */
+@media (max-width: 768px) {
+    .navbar-brand .brand-text {
+        display: none;
+    }
+    
+    .login-card {
+        margin: 10px;
+    }
+    
+    .stat-card h2 {
+        font-size: 2rem;
+    }
+}
+
+/* Loading spinner */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+/* =============================================
+   RELOJ WIDGET
+   ============================================= */
+.reloj-widget {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: 12px 24px;
+    text-align: center;
+    min-width: 220px;
+    box-shadow: 0 4px 16px rgba(0,188,212,0.35);
+}
+
+#reloj-hora {
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+#reloj-fecha {
+    font-size: 0.82rem;
+    opacity: 0.9;
+    text-transform: capitalize;
+    margin-top: 2px;
+}
+
+.horario-badge {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.2);
+}
+
+.horario-badge.activo  { background: rgba(76,175,80,0.4); }
+.horario-badge.inactivo { background: rgba(244,67,54,0.4); }
+
+/* =============================================
+   STAT CARDS MEJORADAS
+   ============================================= */
+.stat-card {
+    border-radius: 14px;
+    padding: 1.2rem 1.4rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    transition: transform .25s, box-shadow .25s;
+    min-height: 100px;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 90px; height: 90px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+}
+
+.stat-num {
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+    text-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+
+.stat-label {
+    font-size: 0.88rem;
+    opacity: 0.92;
+    font-weight: 500;
+}
+
+.stat-icon {
+    font-size: 1rem;
+    opacity: 0.6;
+    margin-bottom: 6px;
+}
+
+/* Acordeón en usuarios / equipos */
+.accordion-button:not(.collapsed) {
+    background-color: #e1f5fe;
+    color: var(--primary-dark);
+    box-shadow: none;
+}
+
+.accordion-button:focus { box-shadow: none; }
+
+.accordion-item { border-radius: 10px !important; overflow: hidden; }
+
+********************************************************************
+   FIN DE LOS ESTILOS MEJORADOS - TEMA ITIL HELPDESK
+   ============================================= */

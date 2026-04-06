@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Estadísticas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-chart-bar"></i> Estadísticas y Análisis</h1>
+        <div class="btn-group">
+            <a href="{{ url_for('admin.exportar_reporte', formato='txt') }}" class="btn btn-outline-primary">
+                <i class="fas fa-file-alt"></i> Exportar TXT
+            </a>
+            <a href="{{ url_for('admin.exportar_reporte', formato='csv') }}" class="btn btn-outline-success">
+                <i class="fas fa-file-csv"></i> Exportar CSV
+            </a>
+            <a href="{{ url_for('admin.exportar_reporte', formato='json') }}" class="btn btn-outline-info">
+                <i class="fas fa-file-code"></i> Exportar JSON
+            </a>
+        </div>
+    </div>
+
+    <!-- Resumen general -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5><i class="fas fa-info-circle"></i> Resumen General</h5>
+                </div>
+                <div class="card-body">
+                    <h2>Total de Tickets: {{ stats.total }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficas -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-pie"></i> Distribución por Estado</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartEstado"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-pie"></i> Distribución por Prioridad</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartPrioridad"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar"></i> Tipos de Problema Más Frecuentes</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartTipo"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tablas resumen -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Resumen por Estado</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Estado</th>
+                                <th>Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for estado in stats.por_estado %}
+                            <tr>
+                                <td>
+                                    <span class="badge" style="background-color: {{ estado.color }};">
+                                        {{ estado.nombre }}
+                                    </span>
+                                </td>
+                                <td><strong>{{ estado.cantidad }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Resumen por Prioridad</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Prioridad</th>
+                                <th>Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prioridad in stats.por_prioridad %}
+                            <tr>
+                                <td>
+                                    <span class="badge" style="background-color: {{ prioridad.color }};">
+                                        {{ prioridad.nombre }}
+                                    </span>
+                                </td>
+                                <td><strong>{{ prioridad.cantidad }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Gráfica de estados
+const ctxEstado = document.getElementById('chartEstado').getContext('2d');
+new Chart(ctxEstado, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for e in stats.por_estado %}'{{ e.nombre }}',{% endfor %}],
+        datasets: [{
+            data: [{% for e in stats.por_estado %}{{ e.cantidad }},{% endfor %}],
+            backgroundColor: [{% for e in stats.por_estado %}'{{ e.color }}',{% endfor %}]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Gráfica de prioridades
+const ctxPrioridad = document.getElementById('chartPrioridad').getContext('2d');
+new Chart(ctxPrioridad, {
+    type: 'pie',
+    data: {
+        labels: [{% for p in stats.por_prioridad %}'{{ p.nombre }}',{% endfor %}],
+        datasets: [{
+            data: [{% for p in stats.por_prioridad %}{{ p.cantidad }},{% endfor %}],
+            backgroundColor: [{% for p in stats.por_prioridad %}'{{ p.color }}',{% endfor %}]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Gráfica de tipos de problema
+const ctxTipo = document.getElementById('chartTipo').getContext('2d');
+new Chart(ctxTipo, {
+    type: 'bar',
+    data: {
+        labels: [{% for t in stats.por_tipo %}'{{ t.nombre }}',{% endfor %}],
+        datasets: [{
+            label: 'Cantidad de Tickets',
+            data: [{% for t in stats.por_tipo %}{{ t.cantidad }},{% endfor %}],
+            backgroundColor: '#007bff'
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

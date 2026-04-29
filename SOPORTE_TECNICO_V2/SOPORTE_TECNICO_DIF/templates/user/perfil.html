@@ -1,209 +1,456 @@
 {% extends "base.html" %}
-{% block title %}Mi Perfil{% endblock %}
+{% block title %}Mi Perfil — ITIL Helpdesk{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
+
+:root {
+  --teal:#0d9488; --teal-dk:#0f766e; --teal-lt:#e0fdf4; --teal-mid:#99f6e4;
+  --slate:#1e293b; --muted:#64748b; --border:#e2e8f0;
+  --surface:#fff; --page-bg:#f0f4f8;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--page-bg);font-family:'DM Sans',system-ui,sans-serif}
+
+@keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* BREADCRUMB */
+.breadcrumb-row{
+  display:flex;align-items:center;gap:6px;font-size:.72rem;
+  color:var(--muted);margin-bottom:16px;
+  animation:slideUp .25s ease both;
+}
+.breadcrumb-row a{color:var(--teal);text-decoration:none}
+.breadcrumb-row a:hover{text-decoration:underline}
+
+/* LAYOUT */
+.perfil-layout{
+  display:grid;grid-template-columns:230px 1fr;
+  gap:18px;align-items:start;
+}
+@media(max-width:768px){.perfil-layout{grid-template-columns:1fr}}
+
+/* SIDEBAR */
+.perfil-sidebar{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:18px;padding:1.5rem;text-align:center;
+  position:sticky;top:76px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  animation:slideUp .3s ease both;animation-delay:.04s;
+}
+
+/* Avatar */
+.p-avatar-wrap{position:relative;display:inline-block;margin-bottom:1rem}
+
+.p-avatar{
+  width:88px;height:88px;border-radius:50%;
+  background:linear-gradient(135deg,var(--teal),var(--teal-dk));
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:2.2rem;font-weight:800;margin:0 auto;overflow:hidden;
+  border:3px solid var(--teal-lt);
+  box-shadow:0 4px 20px rgba(13,148,136,.25);
+  transition:box-shadow .2s;
+}
+.p-avatar:hover{box-shadow:0 6px 24px rgba(13,148,136,.35)}
+.p-avatar img{width:100%;height:100%;object-fit:cover}
+
+/* Botón cámara */
+.p-avatar-btn{
+  position:absolute;bottom:2px;right:2px;
+  width:26px;height:26px;background:var(--teal);color:#fff;
+  border:2px solid #fff;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.62rem;cursor:pointer;transition:background .15s;
+}
+.p-avatar-btn:hover{background:var(--teal-dk)}
+
+/* Botón borrar foto */
+.btn-del-foto{
+  display:inline-flex;align-items:center;gap:5px;
+  margin-top:6px;padding:4px 12px;
+  background:#fee2e2;color:#991b1b;border:1px solid #fecaca;
+  border-radius:20px;font-size:10px;font-weight:700;
+  cursor:pointer;transition:all .14s;
+  font-family:'DM Sans',system-ui,sans-serif;
+}
+.btn-del-foto:hover{background:#ef4444;color:#fff;border-color:#ef4444}
+
+.p-name {font-size:1rem;font-weight:800;color:var(--slate);margin:0 0 3px;letter-spacing:-.2px}
+.p-email{font-size:.7rem;color:var(--muted);word-break:break-all;margin:0 0 10px}
+
+.p-role-pill{
+  display:inline-block;background:var(--teal-lt);color:var(--teal-dk);
+  font-size:.68rem;font-weight:700;padding:3px 12px;
+  border-radius:20px;text-transform:capitalize;
+  border:1px solid var(--teal-mid);
+}
+
+.p-divider{border:none;border-top:1px solid var(--border);margin:1rem 0}
+
+.p-meta-row{
+  display:flex;align-items:center;gap:7px;
+  font-size:.72rem;color:var(--muted);margin-bottom:6px;text-align:left;
+}
+.p-meta-row i{color:var(--teal);width:14px;flex-shrink:0}
+
+/* MAIN */
+.perfil-main{display:flex;flex-direction:column;gap:14px}
+
+.psec{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  animation:slideUp .35s ease both;animation-delay:.08s;
+}
+
+.psec-hdr{
+  padding:12px 18px;border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,#f9fbff,var(--surface));
+  display:flex;align-items:center;gap:9px;
+}
+
+.psec-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+.psec-title{
+  font-size:.68rem;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px;
+}
+
+.psec-body{padding:1.25rem 1.5rem}
+
+/* Campos */
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:640px){.field-grid{grid-template-columns:1fr}}
+
+.field{display:flex;flex-direction:column;gap:5px}
+
+.field label{
+  font-size:.65rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.4px;color:var(--muted);
+}
+
+.field input,.field select{
+  padding:.58rem .9rem;font-size:.85rem;font-family:'DM Sans',system-ui,sans-serif;
+  border:1.5px solid var(--border);border-radius:9px;
+  background:#f8fafc;color:var(--slate);
+  transition:border-color .15s,box-shadow .15s,background .15s;outline:none;
+}
+
+.field input:focus{
+  border-color:var(--teal);background:#fff;
+  box-shadow:0 0 0 3px rgba(13,148,136,.1);
+}
+
+.role-display{
+  display:flex;align-items:center;gap:8px;
+  padding:.58rem .9rem;font-size:.85rem;
+  border:1.5px solid var(--border);border-radius:9px;
+  background:#f1f5f9;color:var(--muted);
+}
+.role-display .pill{
+  background:var(--teal-lt);color:var(--teal-dk);
+  font-size:.66rem;font-weight:700;padding:2px 9px;border-radius:12px;text-transform:capitalize;
+}
+
+.field-hint{
+  font-size:.64rem;color:#94a3b8;margin-top:1px;
+  display:flex;align-items:center;gap:4px;
+}
+
+/* Contraseña */
+.pwd-accent{border-left:3px solid var(--teal);padding-left:1rem}
+.pwd-desc{font-size:.78rem;color:var(--muted);margin-bottom:1rem}
+
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:2.5rem!important}
+.pw-eye{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:#94a3b8;cursor:pointer;
+  padding:4px;font-size:.8rem;transition:color .15s;
+}
+.pw-eye:hover{color:var(--muted)}
+
+.pw-match{font-size:.72rem;margin-top:3px;min-height:1rem}
+
+/* Footer */
+.psec-footer{
+  padding:1rem 1.5rem;border-top:1px solid var(--border);
+  background:linear-gradient(180deg,var(--surface),#f9fbff);
+  display:flex;align-items:center;justify-content:flex-end;gap:10px;
+}
+
+.btn-cancel{
+  padding:.55rem 1.2rem;font-size:.82rem;
+  border:1.5px solid var(--border);border-radius:9px;
+  background:transparent;color:var(--muted);
+  text-decoration:none;display:inline-flex;align-items:center;
+  gap:6px;transition:all .15s;
+}
+.btn-cancel:hover{border-color:#94a3b8;color:var(--slate)}
+
+.btn-save{
+  padding:.58rem 1.4rem;font-size:.82rem;border:none;border-radius:9px;
+  background:linear-gradient(135deg,#0d9488,#0f766e);color:#fff;
+  font-weight:700;cursor:pointer;display:inline-flex;align-items:center;
+  gap:6px;transition:all .15s;font-family:'DM Sans',system-ui,sans-serif;
+  box-shadow:0 3px 10px rgba(13,148,136,.25);
+}
+.btn-save:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(13,148,136,.35)}
+.btn-save:active{transform:scale(.97)}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
+<div>
 
-      <div class="d-flex align-items-center mb-4">
-        <h2 class="mb-0"><i class="bi bi-person-circle me-2"></i>Mi Perfil</h2>
+  {# BREADCRUMB #}
+  <div class="breadcrumb-row">
+    <a href="{{ url_for('user.dashboard') }}"><i class="fas fa-home"></i> Inicio</a>
+    <i class="fas fa-chevron-right" style="font-size:.55rem"></i>
+    <span>Mi perfil</span>
+  </div>
+
+  <div class="perfil-layout">
+
+    {# ── SIDEBAR ── #}
+    <div class="perfil-sidebar">
+      <div class="p-avatar-wrap">
+        {% if usuario and usuario.foto %}
+          <div class="p-avatar">
+            <img src="{{ url_for('static', filename='uploads/' ~ usuario.foto) }}"
+                 alt="foto" id="preview-foto">
+          </div>
+        {% else %}
+          <div class="p-avatar" id="avatar-placeholder">
+            {{ (usuario.nombre_completo or session.get('nombre','U'))[0].upper() if usuario else (session.get('nombre','U'))[0].upper() }}
+            <img src="" alt="" id="preview-foto" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:50%">
+          </div>
+        {% endif %}
+        <label class="p-avatar-btn" for="inputFoto" title="Cambiar foto">
+          <i class="fas fa-camera"></i>
+        </label>
       </div>
 
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      {# Botón borrar foto — solo si tiene foto #}
+      {% if usuario and usuario.foto %}
+      <form method="POST" action="{{ url_for('user.borrar_foto') }}"
+            onsubmit="return confirm('¿Eliminar la foto de perfil?')">
+        <button type="submit" class="btn-del-foto">
+          <i class="fas fa-trash"></i> Quitar foto
+        </button>
+      </form>
+      {% endif %}
+
+      <p class="p-name" style="margin-top:10px">{{ usuario.nombre_completo if usuario else session.nombre }}</p>
+      <p class="p-email">{{ usuario.email if usuario else session.email }}</p>
+      <span class="p-role-pill">{{ usuario.rol_nombre if usuario else session.rol }}</span>
+
+      <hr class="p-divider">
+
+      {% if usuario and usuario.area %}
+      <div class="p-meta-row">
+        <i class="fas fa-building"></i>
+        <span>{{ usuario.area }}</span>
+      </div>
+      {% endif %}
+
+      {% if usuario and usuario.telefono %}
+      <div class="p-meta-row">
+        <i class="fas fa-phone"></i>
+        <span>{{ usuario.telefono }}</span>
+      </div>
+      {% endif %}
+
+      {% if usuario and usuario.fecha_registro %}
+      <div class="p-meta-row">
+        <i class="fas fa-calendar"></i>
+        <span>Desde {{ (usuario.fecha_registro | string)[:10] }}</span>
+      </div>
+      {% endif %}
+
+      <div class="p-meta-row" style="margin-top:10px;color:#94a3b8;font-size:.63rem">
+        <i class="fas fa-info-circle"></i>
+        <span>PNG, JPG, WEBP · máx. 16 MB</span>
+      </div>
+    </div>
+
+    {# ── MAIN ── #}
+    <div class="perfil-main">
+      <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="foto" id="inputFoto" accept="image/*" class="d-none">
+
+        {# DATOS PERSONALES #}
+        <div class="psec">
+          <div class="psec-hdr">
+            <div class="psec-dot" style="background:var(--teal)"></div>
+            <span class="psec-title">Datos personales</span>
           </div>
-        {% endfor %}
-      {% endwith %}
+          <div class="psec-body">
+            <div class="field-grid">
 
-      <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
-
-        <!-- Foto de perfil -->
-        <div class="card shadow-sm mb-4">
-          <div class="card-header bg-primary text-white">
-            <i class="bi bi-camera me-1"></i> Foto de perfil
-          </div>
-          <div class="card-body text-center">
-            {% if usuario and usuario.foto %}
-              <img src="{{ url_for('static', filename='uploads/' ~ usuario.foto) }}"
-                   class="rounded-circle mb-3 border border-3 border-primary"
-                   width="120" height="120" style="object-fit:cover;" id="preview-foto" alt="Foto">
-            {% else %}
-              <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center
-                          justify-content-center mb-3"
-                   style="width:120px;height:120px;font-size:3rem;" id="avatar-placeholder">
-                {{ (usuario.nombre_completo or session.get('nombre','U'))[0].upper() }}
-              </div>
-              <img src="" class="rounded-circle mb-3 border border-3 border-primary d-none"
-                   width="120" height="120" style="object-fit:cover;" id="preview-foto" alt="">
-            {% endif %}
-            <div>
-              <label class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-upload me-1"></i> Cambiar foto
-                <input type="file" name="foto" id="inputFoto" accept="image/*" class="d-none">
-              </label>
-              <p class="text-muted small mt-2 mb-0">PNG, JPG, WEBP — máx. 16 MB</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Datos personales -->
-        <div class="card shadow-sm mb-4">
-          <div class="card-header bg-primary text-white">
-            <i class="bi bi-person me-1"></i> Datos personales
-          </div>
-          <div class="card-body">
-            <div class="row g-3">
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Nombre completo <span class="text-danger">*</span></label>
-                <input type="text" name="nombre" class="form-control" required
-                       value="{{ usuario.nombre if usuario else '' }}">
-                <div class="invalid-feedback">Ingresa tu nombre.</div>
-              </div>
-
-              {% if usuario and usuario.apellido %}
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Apellido</label>
-                <input type="text" name="apellido" class="form-control"
-                       value="{{ usuario.apellido if usuario else '' }}">
-              </div>
-              {% endif %}
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Correo electrónico</label>
-                <input type="email" name="email" class="form-control"
-                       value="{{ usuario.email if usuario else '' }}">
+              <div class="field">
+                <label for="nombre">Nombre <span style="color:#ef4444">*</span></label>
+                <input type="text" id="nombre" name="nombre" required
+                       value="{{ usuario.nombre if usuario else '' }}"
+                       placeholder="Tu nombre">
               </div>
 
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Teléfono</label>
-                <input type="text" name="telefono" class="form-control"
+              <div class="field">
+                <label for="apellido">Apellido</label>
+                <input type="text" id="apellido" name="apellido"
+                       value="{{ usuario.apellido if usuario and usuario.apellido else '' }}"
+                       placeholder="Tu apellido">
+              </div>
+
+              <div class="field">
+                <label for="email">Correo electrónico</label>
+                <input type="email" id="email" name="email"
+                       value="{{ usuario.email if usuario else '' }}"
+                       placeholder="usuario@empresa.com">
+              </div>
+
+              <div class="field">
+                <label for="telefono">Teléfono</label>
+                <input type="text" id="telefono" name="telefono"
                        value="{{ usuario.telefono if usuario else '' }}"
-                       placeholder="Ej. 55 1234 5678">
+                       placeholder="Ej. 442 123 4567">
               </div>
 
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Área / Departamento</label>
-                <input type="text" name="area" class="form-control"
-                       value="{{ usuario.area if usuario else '' }}">
+              <div class="field">
+                <label for="area">Área / Departamento</label>
+                <input type="text" id="area" name="area"
+                       value="{{ usuario.area if usuario else '' }}"
+                       placeholder="Tu área de trabajo">
               </div>
 
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Rol</label>
-                <input type="text" class="form-control bg-light"
-                       value="{{ usuario.rol_nombre if usuario else '' }}" disabled>
-                <small class="text-muted">Solo el administrador puede cambiar el rol.</small>
+              <div class="field">
+                <label>Rol</label>
+                <div class="role-display">
+                  <span class="pill">{{ usuario.rol_nombre if usuario else session.rol }}</span>
+                  <i class="fas fa-lock" style="margin-left:auto;font-size:.68rem;color:#94a3b8"></i>
+                </div>
+                <span class="field-hint">
+                  <i class="fas fa-info-circle"></i>
+                  Solo el administrador puede modificar el rol
+                </span>
               </div>
-
-              {% if usuario and usuario.fecha_registro %}
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Miembro desde</label>
-                <input type="text" class="form-control bg-light"
-                       value="{{ usuario.fecha_registro | string | truncate(10, True, '') }}" disabled>
-              </div>
-              {% endif %}
 
             </div>
           </div>
         </div>
 
-        <!-- Cambiar contraseña -->
-        <div class="card shadow-sm mb-4">
-          <div class="card-header bg-warning text-dark">
-            <i class="bi bi-lock me-1"></i> Cambiar contraseña
-            <small class="ms-2 text-muted">(vacío = sin cambios)</small>
+        {# SEGURIDAD #}
+        <div class="psec">
+          <div class="psec-hdr">
+            <div class="psec-dot" style="background:#f59e0b"></div>
+            <span class="psec-title">Seguridad — cambiar contraseña</span>
           </div>
-          <div class="card-body">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Nueva contraseña</label>
-                <div class="input-group">
-                  <input type="password" name="password_new" id="pwNew"
-                         class="form-control" placeholder="Mínimo 6 caracteres" minlength="6">
-                  <button class="btn btn-outline-secondary" type="button"
-                          onclick="togglePw('pwNew',this)">
-                    <i class="bi bi-eye"></i>
-                  </button>
+          <div class="psec-body">
+            <div class="pwd-accent">
+              <p class="pwd-desc">
+                <i class="fas fa-info-circle me-1" style="color:var(--teal)"></i>
+                Deja los campos vacíos para conservar tu contraseña actual.
+              </p>
+              <div class="field-grid">
+
+                <div class="field">
+                  <label for="pwNew">Nueva contraseña</label>
+                  <div class="pw-wrap">
+                    <input type="password" id="pwNew" name="password_new"
+                           placeholder="Mínimo 6 caracteres" minlength="6">
+                    <button type="button" class="pw-eye" onclick="togglePw('pwNew',this)">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Confirmar contraseña</label>
-                <div class="input-group">
-                  <input type="password" name="password_confirm" id="pwConf"
-                         class="form-control" placeholder="Repite la contraseña">
-                  <button class="btn btn-outline-secondary" type="button"
-                          onclick="togglePw('pwConf',this)">
-                    <i class="bi bi-eye"></i>
-                  </button>
+
+                <div class="field">
+                  <label for="pwConf">Confirmar contraseña</label>
+                  <div class="pw-wrap">
+                    <input type="password" id="pwConf" name="password_confirm"
+                           placeholder="Repite la contraseña">
+                    <button type="button" class="pw-eye" onclick="togglePw('pwConf',this)">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </div>
+                  <div id="pw-match-msg" class="pw-match"></div>
                 </div>
-                <div id="pw-match-msg" class="small mt-1"></div>
+
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Botones -->
-        <div class="d-flex gap-2 justify-content-end">
-          <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Cancelar
-          </a>
-          <button type="submit" class="btn btn-primary">
-            <i class="bi bi-save me-1"></i> Guardar cambios
-          </button>
+          <div class="psec-footer">
+            <a href="{{ url_for('user.dashboard') }}" class="btn-cancel">
+              <i class="fas fa-arrow-left"></i> Cancelar
+            </a>
+            <button type="submit" class="btn-save">
+              <i class="fas fa-save"></i> Guardar cambios
+            </button>
+          </div>
         </div>
 
       </form>
     </div>
+
   </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
+/* Vista previa de foto */
 document.getElementById('inputFoto').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
-    const preview     = document.getElementById('preview-foto');
     const placeholder = document.getElementById('avatar-placeholder');
-    preview.src = ev.target.result;
-    preview.classList.remove('d-none');
-    if (placeholder) placeholder.classList.add('d-none');
+    const preview = document.getElementById('preview-foto');
+    if (placeholder) {
+      placeholder.style.position = 'relative';
+      placeholder.textContent = '';
+      preview.src = ev.target.result;
+      preview.style.display = 'block';
+    } else if (preview) {
+      preview.src = ev.target.result;
+    }
   };
   reader.readAsDataURL(file);
 });
 
+/* Toggle contraseña */
 function togglePw(id, btn) {
   const input = document.getElementById(id);
   const isText = input.type === 'text';
   input.type = isText ? 'password' : 'text';
-  btn.innerHTML = isText ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+  btn.querySelector('i').className = isText ? 'fas fa-eye' : 'fas fa-eye-slash';
 }
 
-const pwNew = document.getElementById('pwNew');
+/* Validación contraseñas */
+const pwNew  = document.getElementById('pwNew');
 const pwConf = document.getElementById('pwConf');
-const msg = document.getElementById('pw-match-msg');
+const msg    = document.getElementById('pw-match-msg');
 
 function checkPw() {
-  if (!pwNew.value && !pwConf.value) { msg.textContent = ''; return; }
+  if (!pwNew.value && !pwConf.value) { msg.innerHTML = ''; return; }
   if (pwNew.value === pwConf.value) {
-    msg.innerHTML = '<span class="text-success">✅ Coinciden</span>';
+    msg.innerHTML = '<span style="color:#16a34a"><i class="fas fa-check-circle me-1"></i>Coinciden</span>';
   } else {
-    msg.innerHTML = '<span class="text-danger">❌ No coinciden</span>';
+    msg.innerHTML = '<span style="color:#dc2626"><i class="fas fa-times-circle me-1"></i>No coinciden</span>';
   }
 }
 pwNew.addEventListener('input', checkPw);
 pwConf.addEventListener('input', checkPw);
 
-document.querySelector('form').addEventListener('submit', e => {
-if (pwNew.value && pwNew.value !== pwConf.value) {
-    e.preventDefault();
-    checkPw();
-    pwConf.focus();
-}
+document.querySelector('form').addEventListener('submit', function(e) {
+  if (pwNew.value && pwNew.value !== pwConf.value) {
+    e.preventDefault(); checkPw();
+    pwConf.focus(); pwConf.style.borderColor = '#ef4444';
+    setTimeout(() => { pwConf.style.borderColor = ''; }, 2000);
+  }
 });
 </script>
 {% endblock %}

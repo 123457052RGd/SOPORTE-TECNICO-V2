@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ticket {{ ticket.folio }}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#1e293b;background:#fff;padding:30px}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0d9488;padding-bottom:14px;margin-bottom:20px}
+    .header-left .org{font-size:18px;font-weight:700;color:#0d9488}
+    .header-left .sub{font-size:11px;color:#64748b;margin-top:2px}
+    .header-right{text-align:right}
+    .folio{font-size:20px;font-weight:800;color:#0f766e;font-family:monospace}
+    .folio-lbl{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px}
+    .section{margin-bottom:18px}
+    .section-title{font-size:11px;font-weight:700;color:#0d9488;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0;padding-bottom:5px;margin-bottom:10px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-bottom:12px}
+    .field-lbl{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+    .field-val{font-size:12px;color:#1e293b;font-weight:500}
+    .badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;color:#fff}
+    .desc-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px 12px;font-size:12px;line-height:1.6;white-space:pre-wrap;color:#1e293b}
+    .solucion-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px 12px;font-size:12px;line-height:1.6;white-space:pre-wrap;color:#1e293b}
+    .hist-table{width:100%;border-collapse:collapse;font-size:11px}
+    .hist-table th{text-align:left;padding:6px 10px;background:#f1f5f9;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e2e8f0}
+    .hist-table td{padding:6px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+    .hist-table tr:last-child td{border-bottom:none}
+    .footer{margin-top:30px;border-top:1px solid #e2e8f0;padding-top:10px;text-align:center;font-size:10px;color:#94a3b8}
+    @media print{
+      body{padding:15px}
+      @page{margin:1cm;size:A4}
+    }
+    /* Auto print si se abre como HTML */
+  </style>
+</head>
+<body>
+
+  <!-- Encabezado -->
+  <div class="header">
+    <div class="header-left">
+      <div class="org">ITIL Helpdesk - DIF</div>
+      <div class="sub">Sistema de Soporte Tecnico</div>
+      <div class="sub" style="margin-top:6px">Reporte generado: {{ ticket.fecha_creacion[:10] if ticket.fecha_creacion else '' }}</div>
+    </div>
+    <div class="header-right">
+      <div class="folio-lbl">Numero de Ticket</div>
+      <div class="folio">{{ ticket.folio }}</div>
+    </div>
+  </div>
+
+  <!-- Estado y prioridad -->
+  <div class="section">
+    <div class="section-title">Resumen</div>
+    <div class="grid">
+      <div>
+        <div class="field-lbl">Estado</div>
+        <span class="badge" style="background:{{ ticket.color_estado }}">{{ ticket.estado }}</span>
+      </div>
+      <div>
+        <div class="field-lbl">Prioridad</div>
+        <span class="badge" style="background:{{ ticket.color_prioridad }}">{{ ticket.prioridad }}</span>
+      </div>
+      <div>
+        <div class="field-lbl">Fecha de Creacion</div>
+        <div class="field-val">{{ ticket.fecha_creacion }}</div>
+      </div>
+      {% if ticket.fecha_resolucion %}
+      <div>
+        <div class="field-lbl">Fecha de Resolucion</div>
+        <div class="field-val">{{ ticket.fecha_resolucion }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Detalle -->
+  <div class="section">
+    <div class="section-title">Detalle del Problema</div>
+    <div class="grid" style="margin-bottom:10px">
+      <div>
+        <div class="field-lbl">Reportado por</div>
+        <div class="field-val">{{ ticket.nombre_usuario or 'N/A' }}</div>
+      </div>
+      <div>
+        <div class="field-lbl">Area</div>
+        <div class="field-val">{{ ticket.area_usuario or 'N/A' }}</div>
+      </div>
+      <div>
+        <div class="field-lbl">Tipo de Problema</div>
+        <div class="field-val">{{ ticket.tipo_problema or 'No especificado' }}</div>
+      </div>
+      <div>
+        <div class="field-lbl">Equipo Afectado</div>
+        <div class="field-val">{{ ticket.nombre_equipo or 'No especificado' }}</div>
+      </div>
+      {% if ticket.nombre_tecnico %}
+      <div>
+        <div class="field-lbl">Tecnico Asignado</div>
+        <div class="field-val">{{ ticket.nombre_tecnico }}</div>
+      </div>
+      {% endif %}
+    </div>
+    <div style="margin-bottom:6px">
+      <div class="field-lbl">Titulo</div>
+      <div class="field-val" style="font-size:13px;font-weight:700;margin-top:2px">{{ ticket.titulo }}</div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="field-lbl" style="margin-bottom:5px">Descripcion</div>
+      <div class="desc-box">{{ ticket.descripcion }}</div>
+    </div>
+  </div>
+
+  <!-- Solucion -->
+  {% if ticket.solucion %}
+  <div class="section">
+    <div class="section-title" style="color:#16a34a;border-color:#bbf7d0">Solucion Aplicada</div>
+    <div class="solucion-box">{{ ticket.solucion }}</div>
+    {% if ticket.observaciones_tecnico %}
+    <div style="margin-top:10px">
+      <div class="field-lbl">Observaciones del Tecnico</div>
+      <div class="desc-box" style="margin-top:4px">{{ ticket.observaciones_tecnico }}</div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Historial -->
+  {% if historial %}
+  <div class="section">
+    <div class="section-title">Historial de Actividad</div>
+    <table class="hist-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Accion</th>
+          <th>Descripcion</th>
+          <th>Usuario</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in historial %}
+        <tr>
+          <td>{{ h.fecha }}</td>
+          <td><strong>{{ h.accion }}</strong></td>
+          <td>{{ h.descripcion }}</td>
+          <td>{{ h.nombre_completo }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <div class="footer">
+    ITIL Helpdesk - Sistema DIF de Soporte Tecnico &copy; 2026 &nbsp;|&nbsp; Documento generado automaticamente
+  </div>
+
+  <script>
+    // Si se sirve como HTML (sin WeasyPrint), abre dialogo de impresion automaticamente
+    if (document.contentType !== 'application/pdf') {
+      window.onload = () => window.print();
+    }
+  </script>
+</body>
+</html>

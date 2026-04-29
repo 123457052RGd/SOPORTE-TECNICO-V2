@@ -1,9 +1,51 @@
 """
 DAO para gestión de tickets - MySQL
-BD: equipos_dif | Tabla: tickets (se crea si no existe)
+BD: equipos_dif
+
+FIXES:
+  - _notif con id_usuario=None ahora notifica a TODOS los técnicos/admins activos
+    en lugar de insertar una fila con NULL (que nadie recibe con polling por user_id)
+  - asignar_tecnico: refresca el ticket DESPUÉS del UPDATE para tener nombre_tecnico correcto
+  - Notificaciones al usuario usan url correcta /user/ticket/ (no /mis-tickets/)
 """
 from dao.base_dao import BaseDAO
 from config.database_mysql import now_mx
+
+
+# ──────────────────────────────────────────────
+# HELPER INTERNO: insertar notificación
+# ──────────────────────────────────────────────
+def _notif(titulo, mensaje, tipo='info', id_usuario=None, url=None, id_ticket=None):
+    """
+    FIX: Si id_usuario=None → notifica a TODOS los técnicos activos
+         (antes insertaba NULL y nadie lo recibía en el polling por user_id)
+    Si id_usuario=int → solo para ese usuario
+    """
+    try:
+        if id_usuario is None:
+            # Notificar a todos los técnicos/admins activos
+            tecnicos = BaseDAO.execute_query(
+                "SELECT id_tecnico FROM tecnicos WHERE activo = 1",
+                fetch_all=True
+            ) or []
+            for tec in tecnicos:
+                BaseDAO.execute_query(
+                    """INSERT INTO notificaciones
+                           (id_ticket, id_usuario, tipo, titulo, mensaje, leida, url_accion, fecha_creacion)
+                       VALUES (%s, %s, %s, %s, %s, 0, %s, %s)""",
+                    (id_ticket, tec['id_tecnico'], tipo, titulo, mensaje, url, now_mx()),
+                    commit=True
+                )
+        else:
+            BaseDAO.execute_query(
+                """INSERT INTO notificaciones
+                       (id_ticket, id_usuario, tipo, titulo, mensaje, leida, url_accion, fecha_creacion)
+                   VALUES (%s, %s, %s, %s, %s, 0, %s, %s)""",
+                (id_ticket, id_usuario, tipo, titulo, mensaje, url, now_mx()),
+                commit=True
+            )
+    except Exception as e:
+        print(f'[Notif] Error al insertar: {e}')
 
 
 class TicketDAO(BaseDAO):
@@ -36,12 +78,22 @@ class TicketDAO(BaseDAO):
             ),
             commit=True
         )
-        # Devolver el id insertado
         if result:
             row = BaseDAO.execute_query(
                 'SELECT id_ticket FROM tickets WHERE folio = %s', (folio,), fetch_one=True
             )
-            return row['id_ticket'] if row else None
+            id_ticket = row['id_ticket'] if row else None
+            if id_ticket:
+                # FIX: id_usuario=None → llega a TODOS los técnicos
+                _notif(
+                    titulo=f'Nuevo ticket {folio}',
+                    mensaje=f'Se creó un nuevo ticket de soporte: {ticket.titulo[:80]}',
+                    tipo='nuevo_ticket',
+                    id_usuario=None,
+                    url=f'/admin/ticket/{id_ticket}',
+                    id_ticket=id_ticket
+                )
+            return id_ticket
         return None
 
     @staticmethod
@@ -59,11 +111,13 @@ class TicketDAO(BaseDAO):
             (id_ticket,), fetch_one=True
         )
         if row:
-            colores_estado    = {'Abierto':'#ffc107','En Proceso':'#17a2b8','Resuelto':'#28a745','Cerrado':'#6c757d'}
-            colores_prioridad = {'Baja':'#28a745','Media':'#ffc107','Alta':'#fd7e14','Crítica':'#dc3545'}
-            row['color_estado']    = colores_estado.get(row.get('estado',''),'#999')
-            row['color_prioridad'] = colores_prioridad.get(row.get('prioridad',''),'#999')
-            row['fecha_creacion']  = str(row.get('fecha_creacion',''))
+            colores_estado    = {'Abierto':'#3b82f6','En Proceso':'#f59e0b','Resuelto':'#22c55e','Cerrado':'#94a3b8'}
+            colores_prioridad = {'Baja':'#22c55e','Media':'#f59e0b','Alta':'#f97316','Crítica':'#ef4444'}
+            row['color_estado']    = colores_estado.get(row.get('estado', ''), '#94a3b8')
+            row['color_prioridad'] = colores_prioridad.get(row.get('prioridad', ''), '#94a3b8')
+            row['fecha_creacion']  = str(row.get('fecha_creacion', ''))
+            row['nombre_tecnico']  = row.get('nombre_tecnico') or None
+            row['id_tecnico']      = row.get('id_tecnico') or None
         return row
 
     @staticmethod
@@ -79,12 +133,12 @@ class TicketDAO(BaseDAO):
                ORDER BY t.fecha_creacion DESC""",
             fetch_all=True
         ) or []
-        colores_estado    = {'Abierto':'#ffc107','En Proceso':'#17a2b8','Resuelto':'#28a745','Cerrado':'#6c757d'}
-        colores_prioridad = {'Baja':'#28a745','Media':'#ffc107','Alta':'#fd7e14','Crítica':'#dc3545'}
+        colores_estado    = {'Abierto':'#3b82f6','En Proceso':'#f59e0b','Resuelto':'#22c55e','Cerrado':'#94a3b8'}
+        colores_prioridad = {'Baja':'#22c55e','Media':'#f59e0b','Alta':'#f97316','Crítica':'#ef4444'}
         for r in rows:
-            r['color_estado']    = colores_estado.get(r.get('estado',''),'#999')
-            r['color_prioridad'] = colores_prioridad.get(r.get('prioridad',''),'#999')
-            r['fecha_creacion']  = str(r.get('fecha_creacion',''))
+            r['color_estado']    = colores_estado.get(r.get('estado', ''), '#94a3b8')
+            r['color_prioridad'] = colores_prioridad.get(r.get('prioridad', ''), '#94a3b8')
+            r['fecha_creacion']  = str(r.get('fecha_creacion', ''))
         return rows
 
     @staticmethod
@@ -98,12 +152,12 @@ class TicketDAO(BaseDAO):
                ORDER BY t.fecha_creacion DESC""",
             (id_usuario,), fetch_all=True
         ) or []
-        colores_estado    = {'Abierto':'#ffc107','En Proceso':'#17a2b8','Resuelto':'#28a745','Cerrado':'#6c757d'}
-        colores_prioridad = {'Baja':'#28a745','Media':'#ffc107','Alta':'#fd7e14','Crítica':'#dc3545'}
+        colores_estado    = {'Abierto':'#3b82f6','En Proceso':'#f59e0b','Resuelto':'#22c55e','Cerrado':'#94a3b8'}
+        colores_prioridad = {'Baja':'#22c55e','Media':'#f59e0b','Alta':'#f97316','Crítica':'#ef4444'}
         for r in rows:
-            r['color_estado']    = colores_estado.get(r.get('estado',''),'#999')
-            r['color_prioridad'] = colores_prioridad.get(r.get('prioridad',''),'#999')
-            r['fecha_creacion']  = str(r.get('fecha_creacion',''))
+            r['color_estado']    = colores_estado.get(r.get('estado', ''), '#94a3b8')
+            r['color_prioridad'] = colores_prioridad.get(r.get('prioridad', ''), '#94a3b8')
+            r['fecha_creacion']  = str(r.get('fecha_creacion', ''))
         return rows
 
     @staticmethod
@@ -113,6 +167,29 @@ class TicketDAO(BaseDAO):
             (estado, id_ticket), commit=True
         )
         HistorialDAO.agregar_registro(id_ticket, id_usuario, 'Cambio de estado', f'Estado: {estado}')
+
+        # FIX: refrescar ticket DESPUÉS del UPDATE para datos actualizados
+        ticket = TicketDAO.obtener_por_id(id_ticket)
+        if ticket:
+            # Notificación a todos los técnicos
+            _notif(
+                titulo=f'Estado actualizado — {ticket.get("folio","")}',
+                mensaje=f'{ticket.get("titulo","")[:60]}. Estado: {estado}',
+                tipo='actualizacion',
+                id_usuario=None,
+                url=f'/admin/ticket/{id_ticket}',
+                id_ticket=id_ticket
+            )
+            # Notificación al usuario dueño del ticket
+            if ticket.get('id_usuario'):
+                _notif(
+                    titulo=f'Tu ticket {ticket.get("folio","")} fue actualizado',
+                    mensaje=f'El estado de tu ticket cambio a: {estado}',
+                    tipo='actualizacion',
+                    id_usuario=ticket['id_usuario'],
+                    url=f'/user/ticket/{id_ticket}',   # FIX: url correcta
+                    id_ticket=id_ticket
+                )
         return True
 
     @staticmethod
@@ -124,6 +201,30 @@ class TicketDAO(BaseDAO):
             (id_tecnico, now_mx(), id_ticket), commit=True
         )
         HistorialDAO.agregar_registro(id_ticket, id_usuario, 'Asignación', 'Técnico asignado')
+
+        # FIX: obtener ticket DESPUÉS del UPDATE — así nombre_tecnico ya está actualizado
+        ticket = TicketDAO.obtener_por_id(id_ticket)
+        if ticket:
+            nombre_tec = ticket.get('nombre_tecnico') or 'técnico'
+            # Notif a todos los técnicos (panel admin)
+            _notif(
+                titulo=f'Ticket asignado - {ticket.get("folio","")}',
+                mensaje=f'{ticket.get("titulo","")[:60]} asignado a {nombre_tec}',
+                tipo='asignacion',
+                id_usuario=None,
+                url=f'/admin/ticket/{id_ticket}',
+                id_ticket=id_ticket
+            )
+            # Notif al usuario dueño
+            if ticket.get('id_usuario'):
+                _notif(
+                    titulo=f'Tu ticket {ticket.get("folio","")} fue asignado',
+                    mensaje=f'El técnico {nombre_tec} atenderá tu solicitud',
+                    tipo='asignacion',
+                    id_usuario=ticket['id_usuario'],
+                    url=f'/user/ticket/{id_ticket}',   # FIX: url correcta
+                    id_ticket=id_ticket
+                )
         return True
 
     @staticmethod
@@ -136,6 +237,26 @@ class TicketDAO(BaseDAO):
             (solucion, observaciones or '', now_mx(), id_ticket), commit=True
         )
         HistorialDAO.agregar_registro(id_ticket, id_usuario, 'Resuelto', 'Solución agregada')
+
+        ticket = TicketDAO.obtener_por_id(id_ticket)
+        if ticket:
+            _notif(
+                titulo=f'Ticket resuelto - {ticket.get("folio","")}',
+                mensaje=f'{ticket.get("titulo","")[:60]} fue marcado como Resuelto',
+                tipo='resolucion',
+                id_usuario=None,
+                url=f'/admin/ticket/{id_ticket}',
+                id_ticket=id_ticket
+            )
+            if ticket.get('id_usuario'):
+                _notif(
+                    titulo=f'Tu ticket {ticket.get("folio","")} fue resuelto',
+                    mensaje='Solución aplicada correctamente.',
+                    tipo='resolucion',
+                    id_usuario=ticket['id_usuario'],
+                    url=f'/user/ticket/{id_ticket}',   # FIX: url correcta
+                    id_ticket=id_ticket
+                )
         return True
 
     @staticmethod
@@ -145,6 +266,26 @@ class TicketDAO(BaseDAO):
             (now_mx(), id_ticket), commit=True
         )
         HistorialDAO.agregar_registro(id_ticket, id_usuario, 'Cerrado', 'Ticket cerrado')
+
+        ticket = TicketDAO.obtener_por_id(id_ticket)
+        if ticket:
+            _notif(
+                titulo=f'Ticket cerrado - {ticket.get("folio","")}',
+                mensaje=f'{ticket.get("titulo","")[:60]} fue cerrado',
+                tipo='actualizacion',
+                id_usuario=None,
+                url=f'/admin/ticket/{id_ticket}',
+                id_ticket=id_ticket
+            )
+            if ticket.get('id_usuario'):
+                _notif(
+                    titulo=f'Tu ticket {ticket.get("folio","")} fue cerrado',
+                    mensaje='El ticket ha sido cerrado. Si necesitas más ayuda, crea uno nuevo.',
+                    tipo='actualizacion',
+                    id_usuario=ticket['id_usuario'],
+                    url=f'/user/ticket/{id_ticket}',   # FIX: url correcta
+                    id_ticket=id_ticket
+                )
         return True
 
     @staticmethod
@@ -160,9 +301,14 @@ class TicketDAO(BaseDAO):
                ORDER BY FIELD(estado,'Abierto','En Proceso','Resuelto','Cerrado')""",
             fetch_all=True
         ) or []
-        colores_estado = {'Abierto':'#ffc107','En Proceso':'#17a2b8','Resuelto':'#28a745','Cerrado':'#6c757d'}
+        colores_estado = {
+            'Abierto':    '#3b82f6',
+            'En Proceso': '#f59e0b',
+            'Resuelto':   '#22c55e',
+            'Cerrado':    '#94a3b8'
+        }
         for e in estados_raw:
-            e['color'] = colores_estado.get(e['nombre'], '#999')
+            e['color'] = colores_estado.get(e['nombre'], '#94a3b8')
         stats['por_estado'] = estados_raw
 
         prioridades_raw = BaseDAO.execute_query(
@@ -171,28 +317,52 @@ class TicketDAO(BaseDAO):
                ORDER BY FIELD(prioridad,'Baja','Media','Alta','Crítica')""",
             fetch_all=True
         ) or []
-        colores_prioridad = {'Baja':'#28a745','Media':'#ffc107','Alta':'#fd7e14','Crítica':'#dc3545'}
+        colores_prioridad = {
+            'Baja':    '#22c55e',
+            'Media':   '#f59e0b',
+            'Alta':    '#f97316',
+            'Crítica': '#ef4444'
+        }
         for p in prioridades_raw:
-            p['color'] = colores_prioridad.get(p['nombre'], '#999')
+            p['color'] = colores_prioridad.get(p['nombre'], '#94a3b8')
         stats['por_prioridad'] = prioridades_raw
 
-        # Tipos de problema desde la propia tabla tickets
-        stats['por_tipo'] = BaseDAO.execute_query(
-            """SELECT id_tipo_problema AS nombre, COUNT(*) AS cantidad
-               FROM tickets GROUP BY id_tipo_problema
-               ORDER BY cantidad DESC LIMIT 5""",
+        por_tipo = BaseDAO.execute_query(
+            """SELECT
+                 COALESCE(tp.nombre, CONCAT('Tipo #', t.id_tipo_problema)) AS nombre,
+                 COUNT(*) AS cantidad
+               FROM tickets t
+               LEFT JOIN tipos_problema tp ON t.id_tipo_problema = tp.id_tipo
+               WHERE t.id_tipo_problema IS NOT NULL
+               GROUP BY t.id_tipo_problema, tp.nombre
+               ORDER BY cantidad DESC
+               LIMIT 10""",
             fetch_all=True
-        ) or []
+        )
+        if por_tipo is None:
+            por_tipo = BaseDAO.execute_query(
+                """SELECT id_tipo_problema AS nombre, COUNT(*) AS cantidad
+                   FROM tickets WHERE id_tipo_problema IS NOT NULL
+                   GROUP BY id_tipo_problema ORDER BY cantidad DESC LIMIT 10""",
+                fetch_all=True
+            ) or []
+            for p in por_tipo:
+                v = p.get('nombre')
+                if isinstance(v, int) or (isinstance(v, str) and v.isdigit()):
+                    p['nombre'] = f'Tipo #{v}'
 
+        stats['por_tipo'] = por_tipo or []
         return stats
 
 
+# ──────────────────────────────────────────────
+# HISTORIAL DAO
+# ──────────────────────────────────────────────
 class HistorialDAO(BaseDAO):
 
     @staticmethod
     def agregar_registro(id_ticket, id_usuario, accion, descripcion=''):
         try:
-            # Buscar nombre del usuario
             tec = BaseDAO.execute_query(
                 'SELECT CONCAT(nombre," ",apellido) AS n FROM tecnicos WHERE id_tecnico = %s',
                 (id_usuario,), fetch_one=True
@@ -224,4 +394,5 @@ class HistorialDAO(BaseDAO):
         ) or []
         for r in rows:
             r['nombre_completo'] = r.get('usuario', 'Sistema')
+            r['fecha'] = str(r.get('fecha', ''))
         return rows

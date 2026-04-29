@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Nuevo Equipo</h2>
+    <a href="{{ url_for('admin.equipos') }}" class="btn btn-secondary">← Volver</a>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST">
+
+    <!-- INFORMACIÓN GENERAL -->
+    <div class="card mb-4">
+      <div class="card-header"><strong>Información General</strong></div>
+      <div class="card-body row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label">Área</label>
+          <input list="areas-list" name="area" class="form-control" placeholder="Selecciona o escribe">
+          <datalist id="areas-list">
+            {% for area in areas_lista %}
+              <option value="{{ area }}">
+            {% endfor %}
+          </datalist>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Tipo de Equipo</label>
+          <input list="tipos-list" name="tipo" class="form-control" placeholder="Selecciona o escribe">
+          <datalist id="tipos-list">
+            {% for tipo in tipos_lista %}
+              <option value="{{ tipo }}">
+            {% endfor %}
+          </datalist>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Correo</label>
+          <input type="email" name="correo" class="form-control" placeholder="usuario@empresa.com">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Nombre Responsable <span class="text-danger">*</span></label>
+          <input type="text" name="nombre_responsable" class="form-control" required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Nombre Usuario</label>
+          <input type="text" name="nombre_usuario" class="form-control">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- INVENTARIO -->
+    <div class="card mb-4">
+      <div class="card-header"><strong>Inventario</strong></div>
+      <div class="card-body row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label">Número de Inventario</label>
+          <input type="text" name="num_inventario" class="form-control">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Número de Serie</label>
+          <input type="text" name="num_serie" class="form-control">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">IP de PC</label>
+          <input type="text" name="ip_pc" class="form-control" placeholder="192.168.1.X">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- HARDWARE -->
+    <div class="card mb-4">
+      <div class="card-header"><strong>Hardware</strong></div>
+      <div class="card-body row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label">Procesador</label>
+          <input type="text" name="procesador" class="form-control" placeholder="Intel Core i5...">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Frecuencia</label>
+          <input type="text" name="frecuencia" class="form-control" placeholder="3.2 GHz">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">RAM</label>
+          <input type="text" name="ram" class="form-control" placeholder="8 GB">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Tipo de Disco</label>
+          <select name="tipo_disco" class="form-select">
+            <option value="">-- Selecciona --</option>
+            <option value="HDD">HDD</option>
+            <option value="SSD">SSD</option>
+            <option value="NVMe">NVMe</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Capacidad de Disco</label>
+          <input type="text" name="capacidad_disco" class="form-control" placeholder="500 GB">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MONITOR -->
+    <div class="card mb-4">
+      <div class="card-header"><strong>Monitor</strong></div>
+      <div class="card-body row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label">Pulgadas</label>
+          <input type="text" name="monitor_pulgadas" class="form-control" placeholder='24"'>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Serie Monitor</label>
+          <input type="text" name="serie_monitor" class="form-control">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Inventario Monitor</label>
+          <input type="text" name="inv_monitor" class="form-control">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TELÉFONO -->
+    <div class="card mb-4">
+      <div class="card-header"><strong>Teléfono</strong></div>
+      <div class="card-body row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label">Teléfono</label>
+          <input type="text" name="telefono" class="form-control" placeholder="Extensión o número">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Serie Teléfono</label>
+          <input type="text" name="serie_telefono" class="form-control">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">IP Teléfono</label>
+          <input type="text" name="ip_telefono" class="form-control" placeholder="192.168.1.X">
+        </div>
+
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mb-5">
+      <button type="submit" class="btn btn-primary">Guardar Equipo</button>
+      <a href="{{ url_for('admin.equipos') }}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

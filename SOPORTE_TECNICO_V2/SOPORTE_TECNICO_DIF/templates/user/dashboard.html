@@ -1,147 +1,756 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - Usuario{% endblock %}
+{% block title %}Mi Dashboard — {{ session.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ═══════════════════════════════════════
+   DASHBOARD USUARIO — OPCIÓN 2
+   KPIs con color sólido estilo SaaS
+   ═══════════════════════════════════════ */
+
+body { background: #f1f5f9 !important; }
+
+/* ── HEADER SUPERIOR ── */
+.db-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.db-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.db-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(13,148,136,.3);
+}
+
+.db-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.db-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 2px;
+  letter-spacing: -.3px;
+}
+
+.db-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.db-sub strong {
+  color: #0d9488;
+  font-weight: 600;
+}
+
+/* Reloj */
+.db-clock {
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+  border-radius: 12px;
+  padding: 10px 18px;
+  text-align: center;
+  min-width: 175px;
+  box-shadow: 0 4px 14px rgba(13,148,136,.3);
+}
+
+#reloj-hora {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+#reloj-fecha {
+  font-size: 11px;
+  color: rgba(255,255,255,.8);
+  margin: 4px 0 3px;
+}
+
+#reloj-horario {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+#reloj-horario.activo {
+  background: rgba(74,222,128,.25);
+  color: #d1fae5;
+}
+
+#reloj-horario.inactivo {
+  background: rgba(239,68,68,.25);
+  color: #fecaca;
+}
+
+/* ── KPIs CON COLOR SÓLIDO ── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.kpi-solid {
+  border-radius: 14px;
+  padding: 18px 16px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  transition: transform .18s, box-shadow .18s;
+  cursor: default;
+}
+
+.kpi-solid:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(0,0,0,.15);
+}
+
+/* Círculo decorativo fondo */
+.kpi-solid::after {
+  content: '';
+  position: absolute;
+  right: -16px;
+  bottom: -16px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.12);
+}
+
+.kpi-solid::before {
+  content: '';
+  position: absolute;
+  right: 24px;
+  bottom: -24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.08);
+}
+
+.ks-total   { background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%); box-shadow: 0 4px 16px rgba(13,148,136,.35); }
+.ks-abierto { background: linear-gradient(135deg, #b45309 0%, #d97706 100%); box-shadow: 0 4px 16px rgba(217,119,6,.35); }
+.ks-proceso { background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); box-shadow: 0 4px 16px rgba(59,130,246,.35); }
+.ks-resuelto{ background: linear-gradient(135deg, #15803d 0%, #22c55e 100%); box-shadow: 0 4px 16px rgba(34,197,94,.35); }
+
+.kpi-solid-num {
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -2px;
+  margin-bottom: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.kpi-solid-lbl {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: .85;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  position: relative;
+  z-index: 1;
+}
+
+.kpi-solid-icon {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 22px;
+  opacity: .3;
+  z-index: 1;
+}
+
+/* ── ACCIONES RÁPIDAS ── */
+.db-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.btn-crear {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all .15s;
+  box-shadow: 0 3px 10px rgba(13,148,136,.3);
+}
+
+.btn-crear:hover {
+  color: #fff;
+  opacity: .9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13,148,136,.4);
+}
+
+.btn-crear:active { transform: scale(.97); }
+
+.btn-sec {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #fff;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all .15s;
+}
+
+.btn-sec:hover {
+  color: #334155;
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+/* ── SECCIONES ── */
+.db-section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.db-section-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 18px 11px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafbfc;
+}
+
+.db-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.db-section-title i {
+  color: #0d9488;
+  font-size: 12px;
+}
+
+.section-count {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.section-link {
+  font-size: 11px;
+  color: #0d9488;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.section-link:hover {
+  text-decoration: underline;
+}
+
+/* ── TABLA ── */
+.db-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.db-table thead th {
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafbfc;
+  white-space: nowrap;
+}
+
+.db-table tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #f8fafc;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.db-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.db-table tbody tr:hover td {
+  background: #fafbfc;
+}
+
+/* Folio chip */
+.folio {
+  font-family: 'SFMono-Regular', 'Consolas', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  background: #e0fdf4;
+  color: #0f766e;
+  padding: 3px 7px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+/* Badges estado */
+.badge-estado {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.be-abierto  { background: #dbeafe; color: #1d4ed8; }
+.be-proceso  { background: #fef3c7; color: #92400e; }
+.be-resuelto { background: #d1fae5; color: #065f46; }
+.be-cerrado  { background: #f1f5f9; color: #475569; }
+
+/* Badge prioridad */
+.badge-prio {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.btn-ver {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0fdf4;
+  color: #0f766e;
+  border: 1px solid #99f6e4;
+  text-decoration: none;
+  font-size: 12px;
+  transition: all .15s;
+}
+
+.btn-ver:hover {
+  background: #99f6e4;
+  transform: scale(1.08);
+}
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 42px 20px;
+}
+
+.empty-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+  font-size: 22px;
+  color: #cbd5e1;
+}
+
+.empty-state p {
+  color: #64748b;
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+
+/* ── EQUIPOS GRID ── */
+.eq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.eq-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: box-shadow .15s, transform .15s;
+}
+
+.eq-card:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,.07);
+  transform: translateY(-1px);
+}
+
+.eq-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.eq-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #e0fdf4;
+  color: #0f766e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.eq-nombre {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.eq-tipo {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.eq-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.eq-tag {
+  background: #e2e8f0;
+  color: #334155;
+  border-radius: 5px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.eq-tag.inv {
+  background: #e0fdf4;
+  color: #0f766e;
+  font-weight: 600;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .db-header { flex-direction: column; align-items: flex-start; }
+  .db-clock { min-width: 100%; text-align: left; }
+  #reloj-hora { font-size: 16px; }
+}
+
+@media (max-width: 480px) {
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .eq-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container px-3">
 
-  <!-- ENCABEZADO + RELOJ -->
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+{# ── HEADER ── #}
+<div class="db-header">
+  <div class="db-user">
+    <div class="db-avatar">
+      {% if session.get('foto') %}
+        <img src="{{ url_for('static', filename='uploads/' ~ session.foto) }}" alt="foto">
+      {% else %}
+        {{ (session.nombre or 'U')[:1]|upper }}
+      {% endif %}
+    </div>
     <div>
-      <h1 class="mb-0 fw-bold"><i class="fas fa-home me-2"></i>Mi Dashboard</h1>
-      <small class="text-muted">Bienvenido, {{ session.nombre }}</small>
-    </div>
-    <div class="reloj-widget">
-      <div id="reloj-hora">00:00:00</div>
-      <div id="reloj-fecha"></div>
-      <div id="reloj-horario" class="horario-badge">Cargando...</div>
+      <h1 class="db-title">Mi Dashboard</h1>
+      <p class="db-sub">Bienvenido, <strong>{{ session.nombre }}</strong></p>
     </div>
   </div>
 
-  <!-- TARJETAS ESTADÍSTICAS -->
-  <div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-      <div class="stat-card" style="background:linear-gradient(135deg,#00bcd4,#0097a7);">
-        <div class="stat-icon"><i class="fas fa-ticket-alt"></i></div>
-        <div class="stat-num">{{ total_tickets }}</div>
-        <div class="stat-label">Total Tickets</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="stat-card" style="background:linear-gradient(135deg,#ffa726,#fb8c00);">
-        <div class="stat-icon"><i class="fas fa-folder-open"></i></div>
-        <div class="stat-num">{{ tickets_abiertos }}</div>
-        <div class="stat-label">Abiertos</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="stat-card" style="background:linear-gradient(135deg,#29b6f6,#0288d1);">
-        <div class="stat-icon"><i class="fas fa-spinner"></i></div>
-        <div class="stat-num">{{ tickets_proceso }}</div>
-        <div class="stat-label">En Proceso</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="stat-card" style="background:linear-gradient(135deg,#66bb6a,#43a047);">
-        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-        <div class="stat-num">{{ tickets_resueltos }}</div>
-        <div class="stat-label">Resueltos</div>
-      </div>
-    </div>
+  <div class="db-clock">
+    <div id="reloj-hora">00:00:00</div>
+    <div id="reloj-fecha"></div>
+    <div id="reloj-horario">Cargando...</div>
+  </div>
+</div>
+
+{# ── KPIs SÓLIDOS ── #}
+<div class="kpi-row">
+  <div class="kpi-solid ks-total">
+    <i class="fas fa-ticket-alt kpi-solid-icon"></i>
+    <div class="kpi-solid-num">{{ total_tickets }}</div>
+    <div class="kpi-solid-lbl">Total tickets</div>
+  </div>
+  <div class="kpi-solid ks-abierto">
+    <i class="fas fa-folder-open kpi-solid-icon"></i>
+    <div class="kpi-solid-num">{{ tickets_abiertos }}</div>
+    <div class="kpi-solid-lbl">Abiertos</div>
+  </div>
+  <div class="kpi-solid ks-proceso">
+    <i class="fas fa-sync-alt kpi-solid-icon"></i>
+    <div class="kpi-solid-num">{{ tickets_proceso }}</div>
+    <div class="kpi-solid-lbl">En proceso</div>
+  </div>
+  <div class="kpi-solid ks-resuelto">
+    <i class="fas fa-check-circle kpi-solid-icon"></i>
+    <div class="kpi-solid-num">{{ tickets_resueltos }}</div>
+    <div class="kpi-solid-lbl">Resueltos</div>
+  </div>
+</div>
+
+{# ── ACCIONES ── #}
+<div class="db-actions">
+  <a href="{{ url_for('user.nuevo_ticket') }}" class="btn-crear">
+    <i class="fas fa-plus-circle"></i> Crear nuevo ticket
+  </a>
+  <a href="{{ url_for('user.mis_tickets') }}" class="btn-sec">
+    <i class="fas fa-list" style="color:#0d9488"></i> Ver mis tickets
+  </a>
+</div>
+
+{# ── TICKETS RECIENTES ── #}
+<div class="db-section">
+  <div class="db-section-hdr">
+    <span class="db-section-title">
+      <i class="fas fa-list"></i> Mis tickets recientes
+    </span>
+    {% if tickets|length > 5 %}
+      <a href="{{ url_for('user.mis_tickets') }}" class="section-link">Ver todos →</a>
+    {% endif %}
   </div>
 
-  <!-- BOTÓN NUEVO TICKET -->
-  <div class="mb-4">
-    <a href="{{ url_for('user.nuevo_ticket') }}" class="btn btn-primary btn-lg">
-      <i class="fas fa-plus-circle me-2"></i>Crear Nuevo Ticket
+  {% if tickets %}
+  <div style="overflow-x: auto;">
+    <table class="db-table">
+      <thead>
+        <tr>
+          <th>Folio</th>
+          <th>Título</th>
+          <th>Tipo</th>
+          <th>Prioridad</th>
+          <th>Estado</th>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ticket in tickets[:5] %}
+        <tr>
+          <td>
+            <span class="folio">{{ ticket.folio }}</span>
+          </td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            {{ ticket.titulo[:45] }}{% if ticket.titulo|length > 45 %}…{% endif %}
+          </td>
+          <td style="color:#64748b;font-size:11px">
+            {{ ticket.tipo_problema or '—' }}
+          </td>
+          <td>
+            <span class="badge-prio" style="background:{{ ticket.color_prioridad }}">
+              {{ ticket.prioridad }}
+            </span>
+          </td>
+          <td>
+            {% set estados = {
+              'Abierto':    'be-abierto',
+              'En Proceso': 'be-proceso',
+              'Resuelto':   'be-resuelto',
+              'Cerrado':    'be-cerrado'
+            } %}
+            <span class="badge-estado {{ estados.get(ticket.estado, 'be-cerrado') }}">
+              {{ ticket.estado }}
+            </span>
+          </td>
+          <td style="font-size:11px;color:#94a3b8;white-space:nowrap">
+            <i class="fas fa-calendar-alt me-1"></i>
+            {{ ticket.fecha_creacion[:10] }}
+          </td>
+          <td style="font-size:11px;font-weight:700;color:#334155;white-space:nowrap">
+            {{ ticket.fecha_creacion[11:16] if ticket.fecha_creacion|length > 10 else '—' }}
+          </td>
+          <td>
+            <a href="{{ url_for('user.ver_ticket', id_ticket=ticket.id_ticket) }}"
+               class="btn-ver" title="Ver ticket">
+              <i class="fas fa-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">
+      <i class="fas fa-inbox"></i>
+    </div>
+    <p>No tienes tickets registrados todavía.</p>
+    <a href="{{ url_for('user.nuevo_ticket') }}" class="btn-crear">
+      <i class="fas fa-plus"></i> Crear mi primer ticket
     </a>
   </div>
+  {% endif %}
+</div>
 
-  <!-- TICKETS RECIENTES -->
-  <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <span><i class="fas fa-list me-2"></i>Mis Tickets Recientes</span>
-      {% if tickets|length > 5 %}
-      <a href="{{ url_for('user.mis_tickets') }}" class="btn btn-sm btn-light">Ver todos</a>
-      {% endif %}
-    </div>
-    <div class="card-body p-0">
-      {% if tickets %}
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead>
-            <tr>
-              <th>Folio</th>
-              <th>Título</th>
-              <th>Tipo</th>
-              <th>Prioridad</th>
-              <th>Estado</th>
-              <th><i class="fas fa-clock me-1"></i>Fecha y Hora</th>
-              <th>Ver</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for ticket in tickets[:5] %}
-            <tr>
-              <td><strong>{{ ticket.folio }}</strong></td>
-              <td>{{ ticket.titulo }}</td>
-              <td>{{ ticket.tipo_problema or 'N/A' }}</td>
-              <td><span class="badge" style="background:{{ ticket.color_prioridad }};">{{ ticket.prioridad }}</span></td>
-              <td><span class="badge" style="background:{{ ticket.color_estado }};">{{ ticket.estado }}</span></td>
-              <td>
-                <small>
-                  <i class="fas fa-calendar-alt me-1 text-muted"></i>{{ ticket.fecha_creacion[:10] }}<br>
-                  <i class="fas fa-clock me-1 text-muted"></i><strong>{{ ticket.fecha_creacion[11:19] if ticket.fecha_creacion|length > 10 else '—' }}</strong>
-                </small>
-              </td>
-              <td>
-                <a href="{{ url_for('user.ver_ticket', id_ticket=ticket.id_ticket) }}" class="btn btn-sm btn-info">
-                  <i class="fas fa-eye"></i>
-                </a>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-      <div class="p-4 text-center">
-        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-        <p class="text-muted mb-3">No tienes tickets registrados todavía.</p>
-        <a href="{{ url_for('user.nuevo_ticket') }}" class="btn btn-primary">
-          <i class="fas fa-plus me-1"></i>Crear mi primer ticket
-        </a>
-      </div>
-      {% endif %}
-    </div>
+{# ── EQUIPOS ASIGNADOS ── #}
+<div class="db-section">
+  <div class="db-section-hdr">
+    <span class="db-section-title">
+      <i class="fas fa-desktop"></i> Mis equipos asignados
+    </span>
+    <span class="section-count">
+      {{ equipos|length if equipos else 0 }}
+      equipo{{ 's' if (equipos|length if equipos else 0) != 1 else '' }}
+    </span>
   </div>
 
+  {% if equipos %}
+  <div class="eq-grid">
+    {% for eq in equipos %}
+    <div class="eq-card">
+      <div class="eq-card-top">
+        <div class="eq-icon">
+          {% set tipo = (eq.tipo or '')|lower %}
+          {% if 'laptop' in tipo or 'notebook' in tipo %}
+            <i class="fas fa-laptop"></i>
+          {% elif 'impresora' in tipo or 'printer' in tipo %}
+            <i class="fas fa-print"></i>
+          {% elif 'tel' in tipo or 'phone' in tipo %}
+            <i class="fas fa-phone"></i>
+          {% elif 'monitor' in tipo %}
+            <i class="fas fa-tv"></i>
+          {% elif 'todo en uno' in tipo or 'all in one' in tipo %}
+            <i class="fas fa-desktop"></i>
+          {% else %}
+            <i class="fas fa-desktop"></i>
+          {% endif %}
+        </div>
+        <div>
+          <div class="eq-nombre">{{ eq.num_inventario or eq.nombre or 'Equipo' }}</div>
+          <div class="eq-tipo">{{ eq.tipo or 'Sin tipo' }}</div>
+        </div>
+      </div>
+      <div class="eq-tags">
+        {% if eq.marca %}
+          <span class="eq-tag">{{ eq.marca }}</span>
+        {% endif %}
+        {% if eq.modelo %}
+          <span class="eq-tag">{{ eq.modelo }}</span>
+        {% endif %}
+        {% if eq.area %}
+          <span class="eq-tag">{{ eq.area }}</span>
+        {% endif %}
+        {% if eq.num_inventario %}
+          <span class="eq-tag inv">
+            <i class="fas fa-barcode" style="font-size:9px;margin-right:3px"></i>{{ eq.num_inventario }}
+          </span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-state" style="padding: 28px 20px;">
+    <div class="empty-icon" style="width:50px;height:50px;font-size:18px">
+      <i class="fas fa-desktop"></i>
+    </div>
+    <p style="margin:0;font-size:12px">
+      No tienes equipos asignados.<br>
+      <small style="color:#94a3b8">Contacta a Informática si necesitas registro.</small>
+    </p>
+  </div>
+  {% endif %}
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
 const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-const HORA_INICIO = 9, HORA_FIN = 21;
+const MESES = ['enero','febrero','marzo','abril','mayo','junio',
+               'julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
-function actualizarReloj() {
-  const ahora = new Date();
-  const h = ahora.getHours(), m = ahora.getMinutes(), s = ahora.getSeconds();
+function tick() {
+  const n   = new Date();
+  const pad = v => String(v).padStart(2, '0');
+
   document.getElementById('reloj-hora').textContent =
-    String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-  document.getElementById('reloj-fecha').textContent =
-    DIAS[ahora.getDay()] + ', ' + ahora.getDate() + ' de ' + MESES[ahora.getMonth()] + ' de ' + ahora.getFullYear();
+    `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
 
-  const badge = document.getElementById('reloj-horario');
-  if (h >= HORA_INICIO && h < HORA_FIN) {
-    badge.textContent = '🟢 Servicio activo (9 am – 9 pm)';
-    badge.className = 'horario-badge activo';
+  document.getElementById('reloj-fecha').textContent =
+    `${DIAS[n.getDay()]}, ${n.getDate()} de ${MESES[n.getMonth()]} de ${n.getFullYear()}`;
+
+  const h = n.getHours();
+  const b = document.getElementById('reloj-horario');
+  if (h >= 9 && h < 21) {
+    b.textContent = '🟢 Servicio activo (9 am – 9 pm)';
+    b.className   = 'activo';
   } else {
-    badge.textContent = '🔴 Fuera de horario — regresa de 9 am a 9 pm';
-    badge.className = 'horario-badge inactivo';
+    b.textContent = '🔴 Fuera de horario';
+    b.className   = 'inactivo';
   }
 }
-actualizarReloj();
-setInterval(actualizarReloj, 1000);
+
+tick();
+setInterval(tick, 1000);
 </script>
 {% endblock %}

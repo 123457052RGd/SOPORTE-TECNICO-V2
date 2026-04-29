@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Historial de Notificaciones — ITIL Helpdesk{% endblock %}
+
+{% block extra_css %}
+<style>
+.hist-header{background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border-radius:12px;padding:20px 24px;margin-bottom:20px}
+.hist-header h4{margin:0;font-size:18px;font-weight:700}
+.hist-header small{opacity:.75;font-size:12px}
+.filter-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:18px}
+.filter-card label{font-size:12px;font-weight:600;color:#475569;margin-bottom:4px}
+.filter-card .form-control,.filter-card .form-select{font-size:13px;border-radius:7px;border-color:#e2e8f0}
+.hist-table th{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;background:#f8fafc;border-bottom:2px solid #e2e8f0}
+.hist-table td{font-size:12.5px;vertical-align:middle;border-color:#f1f5f9}
+.hist-table tr:hover td{background:#f8fafc}
+.tipo-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.tipo-nuevo_ticket{background:#dbeafe;color:#1d4ed8}
+.tipo-asignacion{background:#fef3c7;color:#92400e}
+.tipo-resolucion{background:#d1fae5;color:#065f46}
+.tipo-actualizacion{background:#e0f2fe;color:#0369a1}
+.tipo-vencido{background:#fee2e2;color:#991b1b}
+.tipo-info{background:#f1f5f9;color:#475569}
+.leida-si{color:#22c55e;font-size:13px}
+.leida-no{color:#0d9488;font-size:13px;font-weight:700}
+.stats-bar{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.stat-chip{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 14px;font-size:12px;color:#475569;font-weight:500}
+.stat-chip span{font-size:18px;font-weight:700;color:#0d9488;display:block}
+.empty-state{text-align:center;padding:48px 20px;color:#94a3b8}
+.empty-state i{font-size:40px;opacity:.25;margin-bottom:10px;display:block}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hist-header">
+  <div class="d-flex align-items-center gap-3">
+    <i class="fas fa-history" style="font-size:28px;opacity:.8"></i>
+    <div>
+      <h4><i class="fas fa-bell me-2"></i>Historial de Notificaciones</h4>
+      <small>Auditoría completa · filtrable por día, mes y año</small>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm ms-auto"
+       style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);font-size:12px;border-radius:7px">
+      <i class="fas fa-arrow-left me-1"></i> Volver
+    </a>
+  </div>
+</div>
+
+{# ── FILTROS ── #}
+<div class="filter-card">
+  <form method="GET" action="{{ url_for('admin.historial_notificaciones') }}" class="row g-2 align-items-end">
+    <div class="col-6 col-md-2">
+      <label>Día</label>
+      <input type="number" name="dia" class="form-control" placeholder="1-31"
+             min="1" max="31" value="{{ filtro_dia }}">
+    </div>
+    <div class="col-6 col-md-2">
+      <label>Mes</label>
+      <select name="mes" class="form-select">
+        <option value="">Todos</option>
+        {% set meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                        'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] %}
+        {% for i in range(1,13) %}
+        <option value="{{ i }}" {% if filtro_mes|string == i|string %}selected{% endif %}>
+          {{ meses[i] }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <label>Año</label>
+      <select name="anio" class="form-select">
+        <option value="">Todos</option>
+        {% for a in anios %}
+        <option value="{{ a }}" {% if filtro_anio|string == a|string %}selected{% endif %}>{{ a }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <label>Tipo</label>
+      <select name="tipo" class="form-select">
+        <option value="">Todos</option>
+        {% for t in tipos %}
+        <option value="{{ t }}" {% if filtro_tipo == t %}selected{% endif %}>
+          {{ t.replace('_',' ')|title }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-4 d-flex gap-2">
+      <button type="submit" class="btn btn-sm w-100"
+              style="background:#0d9488;color:#fff;border-radius:7px;font-size:13px">
+        <i class="fas fa-filter me-1"></i> Filtrar
+      </button>
+      <a href="{{ url_for('admin.historial_notificaciones') }}"
+         class="btn btn-sm w-100"
+         style="background:#f1f5f9;color:#475569;border-radius:7px;font-size:13px">
+        <i class="fas fa-times me-1"></i> Limpiar
+      </a>
+    </div>
+  </form>
+</div>
+
+{# ── STATS ── #}
+{% set total_leidas  = notificaciones | selectattr('leida') | list | length %}
+{% set total_noLeidas = total - total_leidas %}
+<div class="stats-bar">
+  <div class="stat-chip"><span>{{ total }}</span>Total</div>
+  <div class="stat-chip"><span>{{ total_leidas }}</span>Leídas</div>
+  <div class="stat-chip" style="border-color:#0d9488"><span style="color:#0d9488">{{ total_noLeidas }}</span>No leídas</div>
+</div>
+
+{# ── TABLA ── #}
+{% if notificaciones %}
+<div class="card" style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">
+  <div class="table-responsive">
+    <table class="table hist-table mb-0">
+      <thead>
+        <tr>
+          <th style="width:140px">Fecha</th>
+          <th style="width:130px">Tipo</th>
+          <th>Título</th>
+          <th>Mensaje</th>
+          <th style="width:80px;text-align:center">Estado</th>
+          <th style="width:80px;text-align:center">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for n in notificaciones %}
+        <tr>
+          <td style="font-family:monospace;font-size:11.5px;color:#64748b">{{ n.fecha_fmt }}</td>
+          <td>
+            <span class="tipo-badge tipo-{{ n.tipo }}">
+              {% if n.tipo == 'nuevo_ticket' %}<i class="fas fa-ticket-alt"></i>{% endif %}
+              {% if n.tipo == 'asignacion' %}<i class="fas fa-user-check"></i>{% endif %}
+              {% if n.tipo == 'resolucion' %}<i class="fas fa-check-circle"></i>{% endif %}
+              {% if n.tipo == 'actualizacion' %}<i class="fas fa-sync-alt"></i>{% endif %}
+              {% if n.tipo == 'vencido' %}<i class="fas fa-clock"></i>{% endif %}
+              {% if n.tipo == 'info' %}<i class="fas fa-info-circle"></i>{% endif %}
+              {{ n.tipo.replace('_',' ')|title }}
+            </span>
+          </td>
+          <td style="font-weight:600;color:#1e293b;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+              title="{{ n.titulo }}">{{ n.titulo }}</td>
+          <td style="color:#475569;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+              title="{{ n.mensaje }}">{{ n.mensaje }}</td>
+          <td style="text-align:center">
+            {% if n.leida %}
+              <span class="leida-si" title="Leída"><i class="fas fa-check-double"></i></span>
+            {% else %}
+              <span class="leida-no" title="No leída"><i class="fas fa-circle" style="font-size:9px"></i></span>
+            {% endif %}
+          </td>
+          <td style="text-align:center">
+            {% if n.url_accion %}
+            <a href="{{ n.url_accion }}"
+               title="Ver ticket relacionado"
+               style="display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;color:#0d9488;
+                       border:1px solid #bbf7d0;border-radius:7px;font-size:11px;font-weight:600;
+                       padding:4px 10px;text-decoration:none;transition:all .14s"
+               onmouseover="this.style.background='#0d9488';this.style.color='#fff'"
+               onmouseout="this.style.background='#f0fdf4';this.style.color='#0d9488'">
+              <i class="fas fa-eye"></i> Ver ticket
+            </a>
+            {% else %}
+            <span style="color:#cbd5e1;font-size:11px">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card" style="border:1px solid #e2e8f0;border-radius:10px">
+  <div class="empty-state">
+    <i class="fas fa-bell-slash"></i>
+    <div style="font-size:14px;font-weight:600;color:#475569;margin-bottom:4px">Sin resultados</div>
+    <div style="font-size:12px">No hay notificaciones con los filtros seleccionados.</div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,209 +1,189 @@
 {% extends "base.html" %}
-
 {% block title %}Estadísticas{% endblock %}
 
+{% block extra_css %}
+<style>
+:root{--teal:#0d9488;--teal-dk:#0f766e;--teal-lt:#e0fdf4;--slate:#1e293b;--muted:#64748b;--border:#e2e8f0;--surface:#fff;--page-bg:#f1f5f9}
+body{background:var(--page-bg)!important}
+.est-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.est-title{font-size:22px;font-weight:700;color:var(--slate);display:flex;align-items:center;gap:10px;margin:0}
+.est-title i{color:var(--teal)}
+.btn-export{display:inline-flex;align-items:center;gap:6px;background:var(--teal);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;text-decoration:none;transition:background .15s}
+.btn-export:hover{background:var(--teal-dk);color:#fff}
+.st-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.st-hdr{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--slate);background:#f8fafc}
+.st-hdr i{color:var(--teal);font-size:12px}
+.st-body{padding:18px 20px}
+.resumen-num{font-size:42px;font-weight:800;color:var(--teal);line-height:1}
+.resumen-lbl{font-size:13px;color:var(--muted);margin-top:4px}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:768px){.charts-grid{grid-template-columns:1fr}}
+.chart-wrap{position:relative;height:240px;display:flex;align-items:center;justify-content:center}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);background:#f8fafc}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--slate);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#f8fafc}
+.badge-pill{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;color:#fff;display:inline-block}
+.bar-bg{background:#f1f5f9;border-radius:4px;height:6px;margin-top:4px}
+.bar-fill{height:100%;border-radius:4px;background:var(--teal)}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-chart-bar"></i> Estadísticas y Análisis</h1>
-        <div class="btn-group">
-            <a href="{{ url_for('admin.exportar_reporte', formato='txt') }}" class="btn btn-outline-primary">
-                <i class="fas fa-file-alt"></i> Exportar TXT
-            </a>
-            <a href="{{ url_for('admin.exportar_reporte', formato='csv') }}" class="btn btn-outline-success">
-                <i class="fas fa-file-csv"></i> Exportar CSV
-            </a>
-            <a href="{{ url_for('admin.exportar_reporte', formato='json') }}" class="btn btn-outline-info">
-                <i class="fas fa-file-code"></i> Exportar JSON
-            </a>
-        </div>
-    </div>
+<div>
 
-    <!-- Resumen general -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5><i class="fas fa-info-circle"></i> Resumen General</h5>
-                </div>
-                <div class="card-body">
-                    <h2>Total de Tickets: {{ stats.total }}</h2>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="est-hdr">
+    <h1 class="est-title"><i class="fas fa-chart-bar"></i>Estadísticas y Análisis</h1>
+    <a href="{{ url_for('admin.exportar_reporte', formato='json') }}" class="btn-export">
+      <i class="fas fa-download"></i> Exportar JSON
+    </a>
+  </div>
 
-    <!-- Gráficas -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-chart-pie"></i> Distribución por Estado</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="chartEstado"></canvas>
-                </div>
-            </div>
+  <!-- Resumen -->
+  <div class="st-card">
+    <div class="st-hdr"><i class="fas fa-info-circle"></i>Resumen General</div>
+    <div class="st-body" style="display:flex;align-items:center;gap:16px">
+      <div>
+        <div class="resumen-num">{{ stats.total }}</div>
+        <div class="resumen-lbl">Total de Tickets registrados</div>
+      </div>
+      <div style="flex:1;display:flex;gap:10px;flex-wrap:wrap;margin-left:24px">
+        {% set cls_col={'Abierto':'#3b82f6','En Proceso':'#f59e0b','Resuelto':'#22c55e','Cerrado':'#94a3b8'} %}
+        {% for estado in stats.por_estado %}
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 16px;min-width:110px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:{{ cls_col.get(estado.nombre,'#64748b') }}">{{ estado.cantidad }}</div>
+          <div style="font-size:11px;color:var(--muted)">{{ estado.nombre }}</div>
         </div>
-        
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-chart-pie"></i> Distribución por Prioridad</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="chartPrioridad"></canvas>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
+      </div>
     </div>
+  </div>
 
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-chart-bar"></i> Tipos de Problema Más Frecuentes</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="chartTipo"></canvas>
-                </div>
-            </div>
-        </div>
+  <!-- Gráficas donut + pie -->
+  <div class="charts-grid">
+    <div class="st-card">
+      <div class="st-hdr"><i class="fas fa-chart-pie"></i>Distribución por Estado</div>
+      <div class="st-body">
+        <div class="chart-wrap"><canvas id="chartEstado"></canvas></div>
+      </div>
     </div>
-
-    <!-- Tablas resumen -->
-    <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Resumen por Estado</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Estado</th>
-                                <th>Cantidad</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for estado in stats.por_estado %}
-                            <tr>
-                                <td>
-                                    <span class="badge" style="background-color: {{ estado.color }};">
-                                        {{ estado.nombre }}
-                                    </span>
-                                </td>
-                                <td><strong>{{ estado.cantidad }}</strong></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Resumen por Prioridad</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Prioridad</th>
-                                <th>Cantidad</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for prioridad in stats.por_prioridad %}
-                            <tr>
-                                <td>
-                                    <span class="badge" style="background-color: {{ prioridad.color }};">
-                                        {{ prioridad.nombre }}
-                                    </span>
-                                </td>
-                                <td><strong>{{ prioridad.cantidad }}</strong></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+    <div class="st-card">
+      <div class="st-hdr"><i class="fas fa-chart-pie"></i>Distribución por Prioridad</div>
+      <div class="st-body">
+        <div class="chart-wrap"><canvas id="chartPrioridad"></canvas></div>
+      </div>
     </div>
+  </div>
+
+  <!-- Gráfica de tipos -->
+  <div class="st-card" style="margin-bottom:16px">
+    <div class="st-hdr"><i class="fas fa-chart-bar"></i>Tipos de Problema más Frecuentes</div>
+    <div class="st-body">
+      <div style="position:relative;height:220px"><canvas id="chartTipo"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Tablas -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="st-card">
+      <div class="st-hdr"><i class="fas fa-list"></i>Resumen por Estado</div>
+      <div class="st-body" style="padding:0">
+        <table class="tbl">
+          <thead><tr><th>Estado</th><th>Cantidad</th><th style="width:120px">Barra</th></tr></thead>
+          <tbody>
+            {% for estado in stats.por_estado %}
+            <tr>
+              <td><span class="badge-pill" style="background:{{ estado.color }}">{{ estado.nombre }}</span></td>
+              <td><strong>{{ estado.cantidad }}</strong></td>
+              <td>
+                <div class="bar-bg"><div class="bar-fill" style="width:{{ (estado.cantidad / (stats.total if stats.total > 0 else 1) * 100)|int }}%;background:{{ estado.color }}"></div></div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="st-card">
+      <div class="st-hdr"><i class="fas fa-list"></i>Resumen por Prioridad</div>
+      <div class="st-body" style="padding:0">
+        <table class="tbl">
+          <thead><tr><th>Prioridad</th><th>Cantidad</th><th style="width:120px">Barra</th></tr></thead>
+          <tbody>
+            {% for p in stats.por_prioridad %}
+            <tr>
+              <td><span class="badge-pill" style="background:{{ p.color }}">{{ p.nombre }}</span></td>
+              <td><strong>{{ p.cantidad }}</strong></td>
+              <td>
+                <div class="bar-bg"><div class="bar-fill" style="width:{{ (p.cantidad / (stats.total if stats.total > 0 else 1) * 100)|int }}%;background:{{ p.color }}"></div></div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// Gráfica de estados
-const ctxEstado = document.getElementById('chartEstado').getContext('2d');
-new Chart(ctxEstado, {
-    type: 'doughnut',
-    data: {
-        labels: [{% for e in stats.por_estado %}'{{ e.nombre }}',{% endfor %}],
-        datasets: [{
-            data: [{% for e in stats.por_estado %}{{ e.cantidad }},{% endfor %}],
-            backgroundColor: [{% for e in stats.por_estado %}'{{ e.color }}',{% endfor %}]
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
+const ESTADO_LABELS   = {{ stats.por_estado|map(attribute='nombre')|list|tojson }};
+const ESTADO_DATA     = {{ stats.por_estado|map(attribute='cantidad')|list|tojson }};
+const ESTADO_COLORS   = {{ stats.por_estado|map(attribute='color')|list|tojson }};
+
+const PRIOR_LABELS    = {{ stats.por_prioridad|map(attribute='nombre')|list|tojson }};
+const PRIOR_DATA      = {{ stats.por_prioridad|map(attribute='cantidad')|list|tojson }};
+const PRIOR_COLORS    = {{ stats.por_prioridad|map(attribute='color')|list|tojson }};
+
+const TIPO_LABELS     = {{ stats.por_tipo|map(attribute='nombre')|list|tojson }};
+const TIPO_DATA       = {{ stats.por_tipo|map(attribute='cantidad')|list|tojson }};
+const PALETTE         = ['#0d9488','#3b82f6','#a855f7','#f59e0b','#ef4444','#10b981','#f97316','#6366f1','#ec4899','#14b8a6'];
+
+const CHART_OPTS = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{position:'right',labels:{font:{size:11},padding:10,boxWidth:12}}}
+};
+
+// Donut - Estado
+new Chart(document.getElementById('chartEstado'),{
+  type:'doughnut',
+  data:{labels:ESTADO_LABELS,datasets:[{data:ESTADO_DATA,backgroundColor:ESTADO_COLORS,borderWidth:3,borderColor:'#fff',hoverOffset:6}]},
+  options:{...CHART_OPTS,cutout:'58%'}
 });
 
-// Gráfica de prioridades
-const ctxPrioridad = document.getElementById('chartPrioridad').getContext('2d');
-new Chart(ctxPrioridad, {
-    type: 'pie',
-    data: {
-        labels: [{% for p in stats.por_prioridad %}'{{ p.nombre }}',{% endfor %}],
-        datasets: [{
-            data: [{% for p in stats.por_prioridad %}{{ p.cantidad }},{% endfor %}],
-            backgroundColor: [{% for p in stats.por_prioridad %}'{{ p.color }}',{% endfor %}]
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
+// Pie - Prioridad (colores distintos a los de arriba gracias al DAO)
+new Chart(document.getElementById('chartPrioridad'),{
+  type:'pie',
+  data:{labels:PRIOR_LABELS,datasets:[{data:PRIOR_DATA,backgroundColor:PRIOR_COLORS,borderWidth:3,borderColor:'#fff',hoverOffset:6}]},
+  options:CHART_OPTS
 });
 
-// Gráfica de tipos de problema
-const ctxTipo = document.getElementById('chartTipo').getContext('2d');
-new Chart(ctxTipo, {
-    type: 'bar',
-    data: {
-        labels: [{% for t in stats.por_tipo %}'{{ t.nombre }}',{% endfor %}],
-        datasets: [{
-            label: 'Cantidad de Tickets',
-            data: [{% for t in stats.por_tipo %}{{ t.cantidad }},{% endfor %}],
-            backgroundColor: '#007bff'
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    stepSize: 1
-                }
-            }
-        }
+// Barras - Tipo (cada barra con color distinto de la paleta)
+new Chart(document.getElementById('chartTipo'),{
+  type:'bar',
+  data:{
+    labels:TIPO_LABELS,
+    datasets:[{
+      label:'Tickets',
+      data:TIPO_DATA,
+      backgroundColor:TIPO_LABELS.map((_,i)=>PALETTE[i%PALETTE.length]),
+      hoverBackgroundColor:TIPO_LABELS.map((_,i)=>PALETTE[i%PALETTE.length]+'cc'),
+      borderRadius:6,borderSkipped:false
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},
+      x:{ticks:{font:{size:11},maxRotation:25},grid:{display:false}}
     }
+  }
 });
 </script>
 {% endblock %}

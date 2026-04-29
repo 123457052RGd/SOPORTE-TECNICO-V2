@@ -1,56 +1,187 @@
 {% extends "base.html" %}
-
 {% block title %}Gestión de Equipos{% endblock %}
 
-{% block content %}
-<div class="container-fluid">
-    <h1 class="mb-4">
-        <i class="fas fa-desktop"></i> Gestión de Equipos
-    </h1>
+{% block extra_css %}
+<style>
+:root{--teal:#0d9488;--teal-dk:#0f766e;--teal-lt:#e0fdf4;--slate:#1e293b;--muted:#64748b;--border:#e2e8f0;--surface:#fff;--page-bg:#f1f5f9}
+body{background:var(--page-bg)!important}
+.pg-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;padding-top:4px}
+.pg-title{font-size:20px;font-weight:700;color:var(--slate);margin:0;display:flex;align-items:center;gap:8px}
+.pg-title i{color:var(--teal)}
+.btn-nuevo{background:linear-gradient(135deg,var(--teal),var(--teal-dk));color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;text-decoration:none;transition:all .2s;box-shadow:0 4px 12px rgba(13,148,136,.25)}
+.btn-nuevo:hover{color:#fff;opacity:.9;transform:translateY(-1px);box-shadow:0 6px 16px rgba(13,148,136,.35)}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;background:var(--teal)}
+.kpi-num{font-size:22px;font-weight:700;color:var(--teal);line-height:1;margin:0 0 2px}
+.kpi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:0}
+.dc{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.dc-hdr{padding:11px 16px 9px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.dc-title{font-size:12px;font-weight:600;color:var(--slate);display:flex;align-items:center;gap:6px}
+.dc-title i{color:var(--teal);font-size:11px}
+.dc-body{padding:14px 16px}
+.filter-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}
+@media(max-width:768px){.filter-grid{grid-template-columns:1fr}}
+.dt{width:100%;border-collapse:collapse;font-size:12px}
+.dt th{padding:7px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);background:#f8fafc;white-space:nowrap}
+.dt td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--slate);vertical-align:middle}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:#f8fafc}
+.b{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;display:inline-block;white-space:nowrap}
+.b-area{background:#f1f5f9;color:#475569}
+.b-tipo{background:#dbeafe;color:#1d4ed8}
+.inv{font-family:monospace;font-size:11px;color:var(--muted)}
+.so-cell{font-size:11px;color:var(--muted);max-width:200px;word-break:break-word;white-space:normal;line-height:1.4}
+.btn-act{width:26px;height:26px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;border:none;cursor:pointer;transition:all .15s;text-decoration:none}
+.btn-edit{background:#fef3c7;color:#92400e}
+.btn-edit:hover{background:#fde68a;color:#78350f;transform:scale(1.1)}
+.btn-del{background:#fee2e2;color:#991b1b}
+.btn-del:hover{background:#fecaca;color:#7f1d1d;transform:scale(1.1)}
+.actions-col{white-space:nowrap;display:flex;gap:4px;align-items:center}
+</style>
+{% endblock %}
 
-    <div class="card">
-        <div class="card-body">
-            {% if equipos %}
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th>Tipo</th>
-                            <th>Marca</th>
-                            <th>Modelo</th>
-                            <th>Número de Serie</th>
-                            <th>Ubicación</th>
-                            <th>Usuario Asignado</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for equipo in equipos %}
-                        <tr>
-                            <td>{{ equipo.id_equipo }}</td>
-                            <td><strong>{{ equipo.nombre }}</strong></td>
-                            <td>{{ equipo.tipo }}</td>
-                            <td>{{ equipo.marca or 'N/A' }}</td>
-                            <td>{{ equipo.modelo or 'N/A' }}</td>
-                            <td><small>{{ equipo.numero_serie or 'N/A' }}</small></td>
-                            <td>{{ equipo.ubicacion or 'N/A' }}</td>
-                            <td>{{ equipo.nombre_usuario or 'Sin asignar' }}</td>
-                            <td>
-                                <span class="badge bg-success">{{ equipo.estado }}</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="alert alert-info">
-                No hay equipos registrados.
-            </div>
-            {% endif %}
-        </div>
+{% block content %}
+<div>
+
+  {# HEADER con botón Nuevo Equipo #}
+  <div class="pg-hdr">
+    <h1 class="pg-title"><i class="fas fa-desktop"></i>Gestión de Equipos</h1>
+    <a href="{{ url_for('admin.nuevo_equipo') }}" class="btn-nuevo">
+      <i class="fas fa-plus"></i> Nuevo Equipo
+    </a>
+  </div>
+
+  {# KPIs #}
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-num">{{ total_equipos }}</div>
+      <div class="kpi-lbl">Total Equipos</div>
     </div>
+    {% for st in stats_tipo %}
+    <div class="kpi">
+      <div class="kpi-num" style="font-size:18px">{{ st.cantidad }}</div>
+      <div class="kpi-lbl">{{ st.TIPO or st.tipo or 'Sin tipo' }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# FILTROS #}
+  <div class="dc">
+    <div class="dc-hdr">
+      <span class="dc-title"><i class="fas fa-filter"></i>Filtros</span>
+      {% if busqueda or area_filtro or tipo_filtro %}
+      <a href="{{ url_for('admin.equipos') }}" style="font-size:11px;color:var(--muted)">
+        <i class="fas fa-times me-1"></i>Limpiar
+      </a>
+      {% endif %}
+    </div>
+    <div class="dc-body">
+      <form method="GET" action="{{ url_for('admin.equipos') }}" class="filter-grid">
+        <div>
+          <label class="form-label">Buscar</label>
+          <input type="text" name="busqueda" class="form-control"
+                 placeholder="Nombre, inventario, IP..." value="{{ busqueda }}">
+        </div>
+        <div>
+          <label class="form-label">Área</label>
+          <select name="area" class="form-select">
+            <option value="">Todas</option>
+            {% for area in areas_lista %}
+            <option value="{{ area }}" {% if area_filtro==area %}selected{% endif %}>{{ area }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Tipo</label>
+          <select name="tipo" class="form-select">
+            <option value="">Todos</option>
+            {% for tipo in tipos_lista %}
+            <option value="{{ tipo }}" {% if tipo_filtro==tipo %}selected{% endif %}>{{ tipo }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
+          <a href="{{ url_for('admin.equipos') }}" class="btn btn-secondary"><i class="fas fa-times"></i></a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {# TABLA DE EQUIPOS #}
+  <div class="dc">
+    <div class="dc-hdr">
+      <span class="dc-title">
+        <i class="fas fa-desktop"></i>Equipos
+        <span style="background:#f1f5f9;color:var(--muted);padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600">
+          {{ equipos|length }}
+        </span>
+      </span>
+      <a href="{{ url_for('admin.nuevo_equipo') }}"
+         style="font-size:11px;color:var(--teal);font-weight:600;text-decoration:none">
+        <i class="fas fa-plus me-1"></i>Agregar equipo
+      </a>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="dt">
+        <thead>
+          <tr>
+            <th>No. Inventario</th>
+            <th>Área</th>
+            <th>Responsable</th>
+            <th>Usuario</th>
+            <th>Tipo</th>
+            <th>Procesador</th>
+            <th>RAM</th>
+            <th>IP</th>
+            <th>Correo</th>
+            <th style="text-align:center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for eq in equipos %}
+          <tr>
+            <td class="inv">{{ eq.num_inventario or '—' }}</td>
+            <td><span class="b b-area">{{ eq.area or 'Sin área' }}</span></td>
+            <td style="font-size:11px;white-space:nowrap">{{ eq.nombre_responsable or '—' }}</td>
+            <td style="font-size:11px">{{ eq.nombre_usuario or '—' }}</td>
+            <td><span class="b b-tipo">{{ eq.tipo or '—' }}</span></td>
+            <td style="font-size:11px;color:var(--muted)">{{ eq.procesador or '—' }}</td>
+            <td style="font-size:11px;white-space:nowrap">{{ eq.ram or '—' }}</td>
+            <td class="inv">{{ eq.ip_pc or '—' }}</td>
+            <td style="font-size:11px;color:var(--muted)">{{ eq.correo or '—' }}</td>
+            <td>
+              <div class="actions-col">
+                <a href="{{ url_for('admin.editar_equipo', id_equipo=eq.id_equipo) }}"
+                   class="btn-act btn-edit" title="Editar">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <form method="POST"
+                      action="{{ url_for('admin.eliminar_equipo', id_equipo=eq.id_equipo) }}"
+                      style="display:inline"
+                      onsubmit="return confirm('¿Eliminar equipo {{ eq.num_inventario or eq.nombre_responsable }}?')">
+                  <button type="submit" class="btn-act btn-del" title="Eliminar">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="10" style="text-align:center;padding:28px;color:var(--muted)">
+              <i class="fas fa-desktop me-2"></i>No hay equipos registrados.
+              <a href="{{ url_for('admin.nuevo_equipo') }}" style="color:var(--teal);margin-left:8px">
+                Agregar el primero →
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 {% endblock %}

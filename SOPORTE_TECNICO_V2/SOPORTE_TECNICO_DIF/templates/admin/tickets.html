@@ -17,8 +17,8 @@
                     <select name="estado" class="form-select">
                         <option value="">Todos</option>
                         {% for estado in estados %}
-                        <option value="{{ estado.nombre }}" {% if estado_filtro == estado.nombre %}selected{% endif %}>
-                            {{ estado.nombre }}
+                        <option value="{{ estado }}" {% if estado_filtro == estado %}selected{% endif %}>
+                            {{ estado }}
                         </option>
                         {% endfor %}
                     </select>
@@ -28,8 +28,8 @@
                     <select name="prioridad" class="form-select">
                         <option value="">Todas</option>
                         {% for prioridad in prioridades %}
-                        <option value="{{ prioridad.nombre }}" {% if prioridad_filtro == prioridad.nombre %}selected{% endif %}>
-                            {{ prioridad.nombre }}
+                        <option value="{{ prioridad }}" {% if prioridad_filtro == prioridad %}selected{% endif %}>
+                            {{ prioridad }}
                         </option>
                         {% endfor %}
                     </select>
@@ -72,7 +72,7 @@
                             <td><strong>{{ ticket.folio }}</strong></td>
                             <td>{{ ticket.nombre_usuario }}</td>
                             <td>{{ ticket.area_usuario }}</td>
-                            <td>{{ ticket.titulo[:40] }}...</td>
+                            <td>{{ (ticket.titulo or '')[:40] }}{% if ticket.titulo and ticket.titulo|length > 40 %}...{% endif %}</td>
                             <td>{{ ticket.tipo_problema or 'N/A' }}</td>
                             <td>
                                 <span class="badge" style="background-color: {{ ticket.color_prioridad }};">
@@ -85,7 +85,15 @@
                                 </span>
                             </td>
                             <td>{{ ticket.nombre_tecnico or 'Sin asignar' }}</td>
-                            <td>{{ ticket.fecha_creacion[:16] }}</td>
+                            <td>
+                                {% if ticket.fecha_creacion %}
+                                    {% if ticket.fecha_creacion is string %}
+                                        {{ ticket.fecha_creacion[:16] }}
+                                    {% else %}
+                                        {{ ticket.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}
+                                    {% endif %}
+                                {% else %}—{% endif %}
+                            </td>
                             <td>
                                 <a href="{{ url_for('admin.ver_ticket', id_ticket=ticket.id_ticket) }}" 
                                    class="btn btn-sm btn-primary">

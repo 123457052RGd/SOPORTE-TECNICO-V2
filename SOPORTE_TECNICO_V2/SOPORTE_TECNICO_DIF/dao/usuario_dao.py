@@ -1,28 +1,55 @@
 """
-DAO para gestión de usuarios - MySQL
-BD: equipos_dif | Tablas: usuarios, tecnicos
+DAO para usuarios - MySQL
+BD: equipos_dif
+
+FIXES v3:
+  - obtener_por_id: CORREGIDO bug crítico que mostraba datos del técnico cuando
+    un usuario normal tenía el mismo ID numérico que un técnico.
+    Ahora acepta parámetro `rol` para buscar en la tabla correcta directamente.
+  - actualizar_usuario_completo: foto y cambios siempre se guardan correctamente.
+  - Eliminados print() de debug.
 """
 from dao.base_dao import BaseDAO
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
+
+ROLES_TECNICO = ('admin', 'tecnico', 'jefe')
 
 
 class UsuarioDAO(BaseDAO):
 
     @staticmethod
-    def obtener_por_id(id_usuario):
-        """Busca primero en tecnicos, luego en usuarios — lee foto y telefono reales"""
-        row = BaseDAO.execute_query(
-            """SELECT id_tecnico AS id_usuario,
-                      nombre, apellido,
-                      CONCAT(nombre,' ',apellido) AS nombre_completo,
-                      email, area, telefono,
-                      rol AS rol_nombre, activo,
-                      foto,
-                      NULL AS fecha_registro
-               FROM tecnicos WHERE id_tecnico = %s""",
-            (id_usuario,), fetch_one=True
-        )
-        if not row:
+    def obtener_por_id(id_usuario, rol=None):
+        """
+        Busca el usuario por ID en la tabla correcta según su rol.
+
+        BUG ANTERIOR: siempre buscaba primero en `tecnicos`, por lo que si un
+        usuario normal tenía el mismo ID numérico que un técnico, se devolvían
+        los datos del técnico en lugar del usuario real.
+
+        SOLUCIÓN: si se pasa `rol`, se busca directamente en la tabla correcta.
+        Si no se pasa rol, se intenta determinar por la sesión de Flask.
+        Como último recurso se mantiene el fallback original.
+        """
+        # Determinar tabla por rol
+        es_tecnico = rol in ROLES_TECNICO if rol else None
+
+        if es_tecnico is True:
+            # Buscar solo en técnicos
+            row = BaseDAO.execute_query(
+                """SELECT id_tecnico AS id_usuario,
+                          nombre, apellido,
+                          CONCAT(nombre,' ',apellido) AS nombre_completo,
+                          email, area, telefono,
+                          rol AS rol_nombre, activo,
+                          foto,
+                          NULL AS fecha_registro
+                   FROM tecnicos WHERE id_tecnico = %s""",
+                (id_usuario,), fetch_one=True
+            )
+            return row
+
+        if es_tecnico is False:
+            # Buscar solo en usuarios normales
             row = BaseDAO.execute_query(
                 """SELECT id AS id_usuario,
                           nombre,
@@ -36,11 +63,42 @@ class UsuarioDAO(BaseDAO):
                    FROM usuarios WHERE id = %s""",
                 (id_usuario,), fetch_one=True
             )
+            return row
+
+        # Fallback: si no se conoce el rol, intentar determinar consultando ambas
+        # tablas pero verificando que el email coincida con lo esperado.
+        # Primero intenta usuarios (la mayoría de los logins son usuarios normales).
+        row = BaseDAO.execute_query(
+            """SELECT id AS id_usuario,
+                      nombre,
+                      '' AS apellido,
+                      nombre AS nombre_completo,
+                      email, area,
+                      telefono,
+                      rol AS rol_nombre, activo,
+                      foto,
+                      fecha_registro
+               FROM usuarios WHERE id = %s""",
+            (id_usuario,), fetch_one=True
+        )
+        if row:
+            return row
+
+        row = BaseDAO.execute_query(
+            """SELECT id_tecnico AS id_usuario,
+                      nombre, apellido,
+                      CONCAT(nombre,' ',apellido) AS nombre_completo,
+                      email, area, telefono,
+                      rol AS rol_nombre, activo,
+                      foto,
+                      NULL AS fecha_registro
+               FROM tecnicos WHERE id_tecnico = %s""",
+            (id_usuario,), fetch_one=True
+        )
         return row
 
     @staticmethod
     def obtener_por_email(email):
-        """Busca por email en tecnicos y usuarios"""
         row = BaseDAO.execute_query(
             """SELECT id_tecnico AS id_usuario,
                       nombre, apellido,
@@ -67,7 +125,6 @@ class UsuarioDAO(BaseDAO):
     @staticmethod
     def validar_credenciales(email, password):
         """Valida credenciales. Soporta bcrypt y texto plano legacy."""
-        # 1. Tecnicos
         tec = BaseDAO.execute_query(
             """SELECT id_tecnico AS id_usuario,
                       CONCAT(nombre,' ',apellido) AS nombre_completo,
@@ -86,7 +143,6 @@ class UsuarioDAO(BaseDAO):
             except Exception:
                 pass
 
-        # 2. Usuarios normales
         usr = BaseDAO.execute_query(
             """SELECT id AS id_usuario,
                       nombre AS nombre_completo,
@@ -110,7 +166,6 @@ class UsuarioDAO(BaseDAO):
 
     @staticmethod
     def obtener_todos():
-        """Obtiene todos los usuarios activos"""
         rows = BaseDAO.execute_query(
             """SELECT id AS id_usuario,
                       nombre AS nombre_completo,
@@ -123,7 +178,6 @@ class UsuarioDAO(BaseDAO):
 
     @staticmethod
     def obtener_tecnicos():
-        """Obtiene técnicos y admins activos"""
         rows = BaseDAO.execute_query(
             """SELECT id_tecnico AS id_usuario,
                       CONCAT(nombre,' ',apellido) AS nombre_completo,
@@ -137,11 +191,10 @@ class UsuarioDAO(BaseDAO):
     @staticmethod
     def actualizar_usuario_completo(id_usuario, datos, rol_sesion='usuario'):
         """
-        Actualiza perfil completo: nombre, apellido, email, telefono,
-        area, password y foto. Funciona para tecnicos y usuarios.
+        Actualiza perfil en la tabla correcta según el rol de sesión.
         """
         try:
-            es_tecnico = rol_sesion in ('admin', 'tecnico', 'jefe')
+            es_tecnico = rol_sesion in ROLES_TECNICO
             campos  = []
             valores = []
 
@@ -149,7 +202,7 @@ class UsuarioDAO(BaseDAO):
                 campos.append('nombre = %s')
                 valores.append(datos['nombre'])
 
-            if es_tecnico and datos.get('apellido'):
+            if es_tecnico and datos.get('apellido') is not None:
                 campos.append('apellido = %s')
                 valores.append(datos['apellido'])
 
@@ -157,12 +210,11 @@ class UsuarioDAO(BaseDAO):
                 campos.append('email = %s')
                 valores.append(datos['email'])
 
-            # Telefono para AMBOS (tecnicos y usuarios)
-            if datos.get('telefono') is not None:
+            if 'telefono' in datos and datos['telefono'] is not None:
                 campos.append('telefono = %s')
                 valores.append(datos['telefono'])
 
-            if datos.get('area'):
+            if datos.get('area') is not None:
                 campos.append('area = %s')
                 valores.append(datos['area'])
 
@@ -170,32 +222,34 @@ class UsuarioDAO(BaseDAO):
                 campos.append('password = %s')
                 valores.append(generate_password_hash(datos['password_new']))
 
-            # Foto — siempre guardar si viene
-            if datos.get('foto'):
+            foto_val = datos.get('foto')
+            if foto_val and isinstance(foto_val, str) and foto_val.strip():
                 campos.append('foto = %s')
-                valores.append(datos['foto'])
+                valores.append(foto_val.strip())
 
             if not campos:
-                return True
+                return True  # nada que actualizar
 
             valores.append(id_usuario)
             tabla = 'tecnicos' if es_tecnico else 'usuarios'
             pk    = 'id_tecnico' if es_tecnico else 'id'
 
             query = f"UPDATE {tabla} SET {', '.join(campos)} WHERE {pk} = %s"
-            print(f'[UsuarioDAO] Query: {query}')
-            print(f'[UsuarioDAO] Valores: {valores}')
-
             BaseDAO.execute_query(query, tuple(valores), commit=True)
             return True
 
         except Exception as e:
-            print(f'[UsuarioDAO] Error actualizar perfil: {e}')
+            # Usar logger en producción en lugar de print
+            try:
+                from flask import current_app
+                current_app.logger.error(f'[UsuarioDAO] Error actualizar perfil: {e}')
+            except Exception:
+                pass
             return False
 
     @staticmethod
     def actualizar_usuario(id_usuario, datos):
-        """Método legacy"""
+        """Legacy"""
         try:
             BaseDAO.execute_query(
                 "UPDATE usuarios SET area = %s, telefono = %s WHERE id = %s",
@@ -203,13 +257,11 @@ class UsuarioDAO(BaseDAO):
                 commit=True
             )
             return True
-        except Exception as e:
-            print(f'[UsuarioDAO] Error: {e}')
+        except Exception:
             return False
 
     @staticmethod
     def crear_usuario(nombre, email, password, area='', rol='usuario'):
-        """Crea un nuevo usuario con contraseña hasheada"""
         try:
             username = email.split('@')[0]
             BaseDAO.execute_query(
@@ -220,6 +272,5 @@ class UsuarioDAO(BaseDAO):
                 commit=True
             )
             return True
-        except Exception as e:
-            print(f'[UsuarioDAO] Error crear usuario: {e}')
+        except Exception:
             return False

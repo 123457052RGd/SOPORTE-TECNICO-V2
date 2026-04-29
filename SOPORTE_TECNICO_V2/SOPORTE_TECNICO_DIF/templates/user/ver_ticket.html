@@ -1,157 +1,179 @@
 {% extends "base.html" %}
-
 {% block title %}Ticket {{ ticket.folio }}{% endblock %}
-
-{% block content %}
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-ticket-alt"></i> Ticket {{ ticket.folio }}</h1>
-        <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Volver
-        </a>
-    </div>
-
-    <div class="row">
-        <div class="col-md-8">
-            <!-- Información del ticket -->
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5><i class="fas fa-info-circle"></i> Información del Ticket</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <strong>Estado:</strong>
-                            <span class="badge" style="background-color: {{ ticket.color_estado }}; font-size: 1em;">
-                                {{ ticket.estado }}
-                            </span>
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Prioridad:</strong>
-                            <span class="badge" style="background-color: {{ ticket.color_prioridad }}; font-size: 1em;">
-                                {{ ticket.prioridad }}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong>Título:</strong>
-                        <p>{{ ticket.titulo }}</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong>Tipo de Problema:</strong>
-                        <p>{{ ticket.tipo_problema or 'No especificado' }}</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong>Equipo:</strong>
-                        <p>{{ ticket.nombre_equipo or 'No especificado' }}</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong>Descripción:</strong>
-                        <p class="text-justify">{{ ticket.descripcion }}</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong>Fecha de Creación:</strong>
-                        <p>{{ ticket.fecha_creacion }}</p>
-                    </div>
-                    
-                    {% if ticket.nombre_tecnico %}
-                    <div class="mb-3">
-                        <strong>Técnico Asignado:</strong>
-                        <p><i class="fas fa-user-cog"></i> {{ ticket.nombre_tecnico }}</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Solución (si existe) -->
-            {% if ticket.solucion %}
-            <div class="card mb-4 border-success">
-                <div class="card-header bg-success text-white">
-                    <h5><i class="fas fa-check-circle"></i> Solución Aplicada</h5>
-                </div>
-                <div class="card-body">
-                    {% if ticket.nombre_tecnico %}
-                    <div class="alert alert-info">
-                        <strong><i class="fas fa-user-cog"></i> Resuelto por:</strong> {{ ticket.nombre_tecnico }}<br>
-                        <small><i class="fas fa-building"></i> {{ ticket.area_tecnico }}</small><br>
-                        <small><i class="fas fa-envelope"></i> {{ ticket.email_tecnico }}</small>
-                    </div>
-                    {% endif %}
-                    
-                    <p><strong>Solución:</strong></p>
-                    <p class="text-justify">{{ ticket.solucion }}</p>
-                    
-                    {% if ticket.observaciones_tecnico %}
-                    <hr>
-                    <p><strong>Observaciones del Técnico:</strong></p>
-                    <p class="text-justify">{{ ticket.observaciones_tecnico }}</p>
-                    {% endif %}
-                    
-                    {% if ticket.fecha_resolucion %}
-                    <hr>
-                    <p class="text-muted">
-                        <small>
-                            <i class="fas fa-calendar-check"></i> Resuelto el: {{ ticket.fecha_resolucion }}
-                        </small>
-                    </p>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="col-md-4">
-            <!-- Historial -->
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-history"></i> Historial</h5>
-                </div>
-                <div class="card-body">
-                    {% if historial %}
-                    <div class="timeline">
-                        {% for evento in historial %}
-                        <div class="timeline-item mb-3">
-                            <div class="timeline-marker bg-primary"></div>
-                            <div class="timeline-content">
-                                <strong>{{ evento.accion }}</strong>
-                                <p class="mb-0">{{ evento.descripcion }}</p>
-                                <small class="text-muted">
-                                    {{ evento.fecha }}<br>
-                                    Por: {{ evento.nombre_completo }}
-                                </small>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <p class="text-muted">Sin historial</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
 
 {% block extra_css %}
 <style>
-.timeline-item {
-    position: relative;
-    padding-left: 30px;
-    border-left: 2px solid #dee2e6;
-}
-.timeline-marker {
-    position: absolute;
-    left: -6px;
-    top: 5px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
+:root{--teal:#0d9488;--teal-dk:#0f766e;--teal-lt:#e0fdf4;--slate:#1e293b;--muted:#64748b;--border:#e2e8f0;--surface:#fff;--page-bg:#f1f5f9}
+body{background:var(--page-bg)!important}
+.tk-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+.tk-title{font-size:20px;font-weight:700;color:var(--slate);display:flex;align-items:center;gap:8px;margin:0}
+.tk-title i{color:var(--teal)}
+.tk-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-back{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;color:var(--slate);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:500;text-decoration:none;transition:background .15s}
+.btn-back:hover{background:var(--border);color:var(--slate)}
+.btn-pdf{display:inline-flex;align-items:center;gap:6px;background:#ef4444;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;text-decoration:none;transition:background .15s;cursor:pointer}
+.btn-pdf:hover{background:#dc2626;color:#fff}
+.tk-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.tk-card-hdr{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--slate);background:#f8fafc}
+.tk-card-hdr i{color:var(--teal);font-size:12px}
+.tk-card-body{padding:18px 16px}
+.tk-field{margin-bottom:14px}
+.tk-field:last-child{margin-bottom:0}
+.tk-lbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.tk-val{font-size:13px;color:var(--slate)}
+.tk-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:600px){.tk-grid{grid-template-columns:1fr}}
+.badge-pill{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;color:#fff;display:inline-block}
+.layout{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+/* Timeline historial */
+.hist-item{display:flex;gap:10px;margin-bottom:14px}
+.hist-item:last-child{margin-bottom:0}
+.hist-dot{width:10px;height:10px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:4px}
+.hist-body{flex:1;border-left:2px solid var(--border);padding-left:10px;margin-left:-5px}
+.hist-accion{font-size:12px;font-weight:600;color:var(--slate)}
+.hist-desc{font-size:12px;color:var(--muted);margin-top:1px}
+.hist-meta{font-size:11px;color:#94a3b8;margin-top:2px}
+/* Solucion */
+.solucion-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px}
+.solucion-box .tk-lbl{color:#16a34a}
 </style>
+{% endblock %}
+
+{% block content %}
+<div>
+
+  <div class="tk-hdr">
+    <h1 class="tk-title">
+      <i class="fas fa-ticket-alt"></i> Ticket {{ ticket.folio }}
+    </h1>
+    <div class="tk-actions">
+      <a href="{{ url_for('user.dashboard') }}" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Volver
+      </a>
+      <a href="{{ url_for('user.descargar_ticket_pdf', id_ticket=ticket.id_ticket) }}"
+         class="btn-pdf" target="_blank">
+        <i class="fas fa-file-pdf"></i> Descargar PDF
+      </a>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    {# Columna principal #}
+    <div>
+
+      {# Info general #}
+      <div class="tk-card">
+        <div class="tk-card-hdr"><i class="fas fa-info-circle"></i>Informacion del Ticket</div>
+        <div class="tk-card-body">
+          <div class="tk-grid">
+            <div>
+              <div class="tk-lbl">Estado</div>
+              <span class="badge-pill" style="background:{{ ticket.color_estado }}">{{ ticket.estado }}</span>
+            </div>
+            <div>
+              <div class="tk-lbl">Prioridad</div>
+              <span class="badge-pill" style="background:{{ ticket.color_prioridad }}">{{ ticket.prioridad }}</span>
+            </div>
+          </div>
+          <div class="tk-field">
+            <div class="tk-lbl">Titulo</div>
+            <div class="tk-val" style="font-weight:600">{{ ticket.titulo }}</div>
+          </div>
+          <div class="tk-grid">
+            <div>
+              <div class="tk-lbl">Tipo de Problema</div>
+              <div class="tk-val">{{ ticket.tipo_problema or 'No especificado' }}</div>
+            </div>
+            <div>
+              <div class="tk-lbl">Equipo Afectado</div>
+              <div class="tk-val">{{ ticket.nombre_equipo or 'No especificado' }}</div>
+            </div>
+          </div>
+          <div class="tk-field">
+            <div class="tk-lbl">Descripcion</div>
+            <div class="tk-val" style="line-height:1.6;white-space:pre-wrap">{{ ticket.descripcion }}</div>
+          </div>
+          <div class="tk-grid">
+            <div>
+              <div class="tk-lbl">Fecha de Creacion</div>
+              <div class="tk-val">{{ ticket.fecha_creacion }}</div>
+            </div>
+            {% if ticket.nombre_tecnico %}
+            <div>
+              <div class="tk-lbl">Tecnico Asignado</div>
+              <div class="tk-val"><i class="fas fa-user-cog" style="color:var(--teal)"></i> {{ ticket.nombre_tecnico }}</div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {# Solucion #}
+      {% if ticket.solucion %}
+      <div class="tk-card">
+        <div class="tk-card-hdr" style="background:#f0fdf4;border-color:#bbf7d0">
+          <i class="fas fa-check-circle" style="color:#16a34a"></i>
+          <span style="color:#15803d">Solucion Aplicada</span>
+        </div>
+        <div class="tk-card-body">
+          {% if ticket.nombre_tecnico %}
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px">
+            <strong>Resuelto por:</strong> {{ ticket.nombre_tecnico }}<br>
+            {% if ticket.email_tecnico %}<span style="color:var(--muted)">{{ ticket.email_tecnico }}</span>{% endif %}
+          </div>
+          {% endif %}
+          <div class="tk-field">
+            <div class="tk-lbl" style="color:#16a34a">Solucion</div>
+            <div class="tk-val" style="line-height:1.6;white-space:pre-wrap">{{ ticket.solucion }}</div>
+          </div>
+          {% if ticket.observaciones_tecnico %}
+          <div class="tk-field">
+            <div class="tk-lbl">Observaciones del Tecnico</div>
+            <div class="tk-val" style="line-height:1.6">{{ ticket.observaciones_tecnico }}</div>
+          </div>
+          {% endif %}
+          {% if ticket.fecha_resolucion %}
+          <div style="font-size:11px;color:var(--muted);margin-top:8px">
+            <i class="fas fa-calendar-check"></i> Resuelto el: {{ ticket.fecha_resolucion }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    {# Sidebar historial #}
+    <div class="tk-card">
+      <div class="tk-card-hdr"><i class="fas fa-history"></i>Historial</div>
+      <div class="tk-card-body">
+        {% if historial %}
+          {% for evento in historial %}
+          <div class="hist-item">
+            <div class="hist-dot"></div>
+            <div class="hist-body">
+              <div class="hist-accion">{{ evento.accion }}</div>
+              {% if evento.descripcion %}
+              <div class="hist-desc">{{ evento.descripcion }}</div>
+              {% endif %}
+              <div class="hist-meta">
+                {{ evento.fecha }}<br>
+                Por: {{ evento.nombre_completo }}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0">
+            <i class="fas fa-inbox" style="display:block;font-size:1.5rem;opacity:.3;margin-bottom:6px"></i>
+            Sin historial
+          </p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
 {% endblock %}

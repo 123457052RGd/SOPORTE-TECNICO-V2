@@ -1,127 +1,205 @@
 {% extends "base.html" %}
 {% block title %}Nuevo Ticket{% endblock %}
 
+{% block extra_css %}
+<style>
+:root{--teal:#0d9488;--teal-dk:#0f766e;--teal-lt:#e0fdf4;--slate:#1e293b;--muted:#64748b;--border:#e2e8f0;--surface:#fff;--page-bg:#f1f5f9}
+body{background:var(--page-bg)!important}
+.nt-wrap{max-width:860px;margin:0 auto;padding:1rem 1rem 3rem}
+.nt-title{font-size:20px;font-weight:700;color:var(--slate);display:flex;align-items:center;gap:8px;margin-bottom:1.5rem}
+.nt-title i{color:var(--teal)}
+.nt-layout{display:grid;grid-template-columns:1fr 280px;gap:16px;align-items:start}
+@media(max-width:768px){.nt-layout{grid-template-columns:1fr}}
+.nt-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.nt-card-body{padding:16px 18px}
+.nt-label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.nt-label .req{color:#ef4444}
+.nt-input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--slate);background:#fff;outline:none;transition:border .15s}
+.nt-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.1)}
+.nt-textarea{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--slate);background:#fff;outline:none;resize:vertical;min-height:100px;transition:border .15s}
+.nt-textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.1)}
+.nt-select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--slate);background:#fff;outline:none;cursor:pointer;transition:border .15s}
+.nt-select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.1)}
+.suger-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;margin-top:10px}
+.suger-title{font-size:12px;font-weight:600;color:#1d4ed8;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.suger-list{margin:0;padding-left:18px;font-size:12px;color:#1e40af}
+.suger-list li{margin-bottom:3px}
+.suger-check{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--slate);cursor:pointer}
+.suger-check input{accent-color:var(--teal);width:14px;height:14px}
+/* Equipo badge */
+.eq-badge{display:flex;align-items:center;gap:8px;background:var(--teal-lt);border:1px solid #99f6e4;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:12px;color:var(--teal-dk)}
+.eq-badge i{font-size:13px}
+.eq-badge strong{font-size:13px}
+/* Botones */
+.btn-send{background:var(--teal);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background .15s}
+.btn-send:hover{background:var(--teal-dk)}
+.btn-send:disabled{background:#94a3b8;cursor:not-allowed}
+.btn-cancel{background:#f1f5f9;color:var(--slate);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:background .15s}
+.btn-cancel:hover{background:var(--border);color:var(--slate)}
+/* Info panel */
+.info-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;position:sticky;top:16px}
+.info-hdr{background:var(--teal);color:#fff;padding:11px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.info-body{padding:14px 16px;font-size:12px;color:var(--slate);line-height:1.6}
+.info-body ul{padding-left:16px;margin:6px 0 0}
+.info-body li{margin-bottom:4px}
+/* Mis equipos en panel */
+.mis-equipos{margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
+.mis-equipos-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.eq-item{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:11px;color:var(--slate)}
+.eq-item strong{font-size:12px;color:var(--teal-dk);display:block;margin-bottom:2px}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-  <div class="row">
-    <div class="col-lg-8">
+<div class="nt-wrap">
 
-      <h2 class="mb-4"><i class="bi bi-plus-circle me-2"></i>Crear Nuevo Ticket</h2>
+  <div class="nt-title">
+    <i class="fas fa-plus-circle"></i> Crear Nuevo Ticket
+  </div>
 
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show">
-            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          </div>
-        {% endfor %}
-      {% endwith %}
+  <div class="nt-layout">
 
+    {# ── FORMULARIO ── #}
+    <div>
       <form method="POST" id="formTicket">
 
-        <!-- Título -->
-        <div class="card shadow-sm mb-3">
-          <div class="card-body">
-            <label class="form-label fw-semibold">Título del Problema <span class="text-danger">*</span></label>
-            <input type="text" name="titulo" class="form-control" required
+        {# Titulo #}
+        <div class="nt-card">
+          <div class="nt-card-body">
+            <label class="nt-label">Titulo del Problema <span class="req">*</span></label>
+            <input type="text" name="titulo" class="nt-input" required
                    placeholder="Ej: No hay internet en el CIR">
           </div>
         </div>
 
-        <!-- Tipo de problema -->
-        <div class="card shadow-sm mb-3">
-          <div class="card-body">
-            <label class="form-label fw-semibold">Tipo de Problema <span class="text-danger">*</span></label>
-            <select name="id_tipo_problema" id="selectTipo" class="form-select" required>
+        {# Tipo de problema #}
+        <div class="nt-card">
+          <div class="nt-card-body">
+            <label class="nt-label">Tipo de Problema <span class="req">*</span></label>
+            <select name="id_tipo_problema" id="selectTipo" class="nt-select" required>
               <option value="">Seleccione un tipo</option>
               {% for tipo in tipos_problema %}
                 <option value="{{ tipo.id_tipo }}">{{ tipo.nombre }}</option>
               {% endfor %}
             </select>
-
-            <!-- Sugerencias dinámicas -->
-            <div id="sugerencias-box" class="mt-3 d-none">
-              <div class="alert alert-info p-2">
-                <strong><i class="bi bi-lightbulb me-1"></i>Sugerencias antes de enviar tu ticket:</strong>
-                <ul id="lista-sugerencias" class="mb-0 mt-2 ps-3"></ul>
-              </div>
-              <div class="form-check mt-2">
-                <input class="form-check-input" type="checkbox" id="checkSugerencias">
-                <label class="form-check-label" for="checkSugerencias">
-                  Ya revisé las sugerencias y el problema persiste
-                </label>
-              </div>
+            <div id="sugerencias-box" class="suger-box" style="display:none">
+              <div class="suger-title"><i class="fas fa-lightbulb"></i> Sugerencias antes de enviar:</div>
+              <ul id="lista-sugerencias" class="suger-list"></ul>
+              <label class="suger-check">
+                <input type="checkbox" id="checkSugerencias">
+                Ya revise las sugerencias y el problema persiste
+              </label>
             </div>
           </div>
         </div>
 
-        <!-- Equipo (opcional) -->
-        <div class="card shadow-sm mb-3">
-          <div class="card-body">
-            <label class="form-label fw-semibold">Equipo Afectado <span class="text-muted">(opcional)</span></label>
-            <select name="id_equipo" class="form-select">
+        {# Equipo afectado — muestra equipos del usuario #}
+        <div class="nt-card">
+          <div class="nt-card-body">
+            <label class="nt-label">Equipo Afectado <span style="color:var(--muted);font-weight:400;text-transform:none;font-size:11px">(opcional)</span></label>
+            <select name="id_equipo" class="nt-select">
               <option value="">Ninguno / No aplica</option>
               {% for equipo in equipos %}
                 <option value="{{ equipo.id_equipo }}">
-                  {{ equipo.tipo or 'Equipo' }} — {{ equipo.num_inventario or equipo.ip_pc or 'Sin inventario' }}
+                  {% if equipo.tipo %}{{ equipo.tipo }}{% endif %}
+                  {% if equipo.num_inventario %} — Inv: {{ equipo.num_inventario }}{% endif %}
+                  {% if equipo.ip_pc %} ({{ equipo.ip_pc }}){% endif %}
+                  {% if equipo.area %} | {{ equipo.area }}{% endif %}
                 </option>
               {% endfor %}
             </select>
+            {# Mostrar equipos del usuario como referencia visual #}
+            {% if equipos %}
+            <div style="margin-top:8px">
+              {% for equipo in equipos %}
+              <div class="eq-badge">
+                <i class="fas fa-desktop"></i>
+                <div>
+                  <strong>{{ equipo.tipo or 'Equipo' }}</strong>
+                  {% if equipo.num_inventario %} &nbsp;·&nbsp; Inv: {{ equipo.num_inventario }}{% endif %}
+                  {% if equipo.ip_pc %} &nbsp;·&nbsp; IP: {{ equipo.ip_pc }}{% endif %}
+                  {% if equipo.area %}<br><span style="color:var(--muted)">{{ equipo.area }}</span>{% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div style="font-size:11px;color:var(--muted);margin-top:6px">
+              <i class="fas fa-info-circle"></i> No tienes equipos asignados. Puedes continuar sin seleccionar uno.
+            </div>
+            {% endif %}
           </div>
         </div>
 
-        <!-- Descripción -->
-        <div class="card shadow-sm mb-3">
-          <div class="card-body">
-            <label class="form-label fw-semibold">Descripción del Problema <span class="text-danger">*</span></label>
-            <textarea name="descripcion" class="form-control" rows="4" required
-                      placeholder="Describa detalladamente el problema que está experimentando..."></textarea>
+        {# Descripcion #}
+        <div class="nt-card">
+          <div class="nt-card-body">
+            <label class="nt-label">Descripcion del Problema <span class="req">*</span></label>
+            <textarea name="descripcion" class="nt-textarea" required
+                      placeholder="Describa detalladamente el problema..."></textarea>
           </div>
         </div>
 
-        <!-- Prioridad -->
-        <div class="card shadow-sm mb-4">
-          <div class="card-body">
-            <label class="form-label fw-semibold">Prioridad <span class="text-danger">*</span></label>
-            <select name="id_prioridad" class="form-select" required>
+        {# Prioridad #}
+        <div class="nt-card">
+          <div class="nt-card-body">
+            <label class="nt-label">Prioridad <span class="req">*</span></label>
+            <select name="id_prioridad" class="nt-select" required>
               <option value="">Seleccione una prioridad</option>
               {% for p in prioridades %}
                 <option value="{{ p.id }}">{{ p.nombre }}</option>
               {% endfor %}
             </select>
-            <small class="text-muted">Baja: Puede esperar | Media: Normal | Alta: Urgente | Crítica: Detiene operaciones</small>
+            <div style="font-size:11px;color:var(--muted);margin-top:5px">
+              Baja: puede esperar &nbsp;·&nbsp; Media: normal &nbsp;·&nbsp; Alta: urgente &nbsp;·&nbsp; Critica: detiene operaciones
+            </div>
           </div>
         </div>
 
-        <!-- Botón enviar -->
-        <div class="d-flex gap-2 justify-content-end">
-          <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Cancelar
+        {# Botones #}
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px">
+          <a href="{{ url_for('user.dashboard') }}" class="btn-cancel">
+            <i class="fas fa-arrow-left"></i> Cancelar
           </a>
-          <button type="submit" class="btn btn-primary" id="btnEnviar">
-            <i class="bi bi-send me-1"></i> Enviar Ticket
+          <button type="submit" class="btn-send" id="btnEnviar">
+            <i class="fas fa-paper-plane"></i> Enviar Ticket
           </button>
         </div>
 
       </form>
     </div>
 
-    <!-- Panel informativo -->
-    <div class="col-lg-4">
-      <div class="card shadow-sm border-info">
-        <div class="card-header bg-info text-white">
-          <i class="bi bi-info-circle me-1"></i> Información
+    {# ── PANEL LATERAL ── #}
+    <div class="info-panel">
+      <div class="info-hdr">
+        <i class="fas fa-info-circle"></i> Informacion
+      </div>
+      <div class="info-body">
+        <p>Antes de enviar el ticket, el sistema mostrara sugerencias que podrian resolver tu problema.</p>
+        <hr style="border-color:var(--border);margin:10px 0">
+        <strong>Cuando crear un ticket:</strong>
+        <ul>
+          <li>Problemas de hardware</li>
+          <li>Errores de software</li>
+          <li>Problemas de red</li>
+          <li>Solicitudes de soporte</li>
+        </ul>
+
+        {# Mis equipos en el panel #}
+        {% if equipos %}
+        <div class="mis-equipos">
+          <div class="mis-equipos-title"><i class="fas fa-desktop"></i> Mis Equipos Asignados</div>
+          {% for eq in equipos %}
+          <div class="eq-item">
+            <strong>{{ eq.tipo or 'Equipo' }}</strong>
+            {% if eq.area %}<span style="color:var(--muted)">{{ eq.area }}</span><br>{% endif %}
+            {% if eq.num_inventario %}Inv: {{ eq.num_inventario }}<br>{% endif %}
+            {% if eq.ip_pc %}IP: {{ eq.ip_pc }}{% endif %}
+          </div>
+          {% endfor %}
         </div>
-        <div class="card-body">
-          <p class="small">Antes de enviar el ticket, el sistema le mostrará algunas sugerencias que podrían resolver su problema.</p>
-          <hr>
-          <strong class="small">¿Cuándo crear un ticket?</strong>
-          <ul class="small mt-2">
-            <li>Problemas de hardware</li>
-            <li>Errores de software</li>
-            <li>Problemas de red</li>
-            <li>Solicitudes de soporte</li>
-          </ul>
-        </div>
+        {% endif %}
+
       </div>
     </div>
 
@@ -129,49 +207,39 @@
 </div>
 
 <script>
-const selectTipo   = document.getElementById('selectTipo');
-const sugerBox     = document.getElementById('sugerencias-box');
-const listaSuger   = document.getElementById('lista-sugerencias');
-const checkSuger   = document.getElementById('checkSugerencias');
-const btnEnviar    = document.getElementById('btnEnviar');
-const form         = document.getElementById('formTicket');
+const selectTipo = document.getElementById('selectTipo');
+const sugerBox   = document.getElementById('sugerencias-box');
+const listaSuger = document.getElementById('lista-sugerencias');
+const checkSuger = document.getElementById('checkSugerencias');
+const form       = document.getElementById('formTicket');
+const btnEnviar  = document.getElementById('btnEnviar');
 
-// Cargar sugerencias al cambiar tipo
 selectTipo.addEventListener('change', async function() {
   const idTipo = this.value;
-  sugerBox.classList.add('d-none');
-  listaSuger.innerHTML = '';
-  checkSuger.checked = false;
-
+  sugerBox.style.display = 'none';
+  listaSuger.innerHTML   = '';
+  checkSuger.checked     = false;
   if (!idTipo) return;
-
   try {
     const resp = await fetch(`/user/api/sugerencias/${idTipo}`);
     const data = await resp.json();
-
     if (data && data.length > 0) {
       data.forEach(s => {
         const li = document.createElement('li');
         li.textContent = s.sugerencia;
-        li.className = 'mb-1';
         listaSuger.appendChild(li);
       });
-      sugerBox.classList.remove('d-none');
+      sugerBox.style.display = 'block';
     }
-  } catch(e) {
-    console.log('Sin sugerencias:', e);
-  }
+  } catch(e) {}
 });
 
-// Validar que haya revisado sugerencias antes de enviar
 form.addEventListener('submit', function(e) {
-  // Si hay sugerencias visibles y no las ha confirmado, bloquear
-  if (!sugerBox.classList.contains('d-none') && !checkSuger.checked) {
+  if (sugerBox.style.display !== 'none' && !checkSuger.checked) {
     e.preventDefault();
     alert('Por favor revisa las sugerencias y confirma que el problema persiste antes de enviar el ticket.');
     checkSuger.focus();
-    return false;
-}
+  }
 });
 </script>
 {% endblock %}

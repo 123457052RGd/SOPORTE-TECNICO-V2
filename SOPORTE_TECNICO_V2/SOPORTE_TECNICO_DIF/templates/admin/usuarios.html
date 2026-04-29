@@ -1,348 +1,204 @@
-{% extends "base.html" %}
-{% block title %}Usuarios del Sistema{% endblock %}
+  {% extends "base.html" %}
+  {% block title %}Usuarios del Sistema{% endblock %}
 
-{% block extra_css %}
-<style>
-  /* ── Paleta ──────────────────────────────────────────────── */
-  :root {
-    --u-bg:       #f0f4f8;
-    --u-surface:  #ffffff;
-    --u-border:   #e2e8f0;
-    --u-text:     #1a202c;
-    --u-muted:    #718096;
-    --u-teal:     #0d9488;
-    --u-teal-dk:  #0f766e;
-    --u-indigo:   #4f46e5;
-    --u-amber:    #d97706;
-    --u-red:      #dc2626;
-    --u-green:    #16a34a;
-    --u-shadow:   0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
-    --u-radius:   14px;
-  }
+  {% block extra_css %}
+  <style>
+  :root{--teal:#0d9488;--teal-dk:#0f766e;--teal-lt:#e0fdf4;--slate:#1e293b;--muted:#64748b;--border:#e2e8f0;--surface:#fff;--page-bg:#f1f5f9;--red:#ef4444;--amber:#f59e0b;--green:#22c55e;--blue:#3b82f6;--purple:#a855f7}
+  body{background:var(--page-bg)!important}
+  /* header */
+  .pg-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;padding-top:4px}
+  .pg-title{font-size:20px;font-weight:700;color:var(--slate);margin:0;display:flex;align-items:center;gap:8px}
+  .pg-title i{color:var(--teal)}
+  /* kpi */
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0}
+  .kp::before{background:var(--purple)}.kb::before{background:var(--blue)}.kt::before{background:var(--teal)}.ka::before{background:var(--amber)}
+  .kpi-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;margin-bottom:8px}
+  .kp .kpi-icon{background:#f3e8ff;color:#7e22ce}.kb .kpi-icon{background:#dbeafe;color:#1d4ed8}.kt .kpi-icon{background:var(--teal-lt);color:var(--teal-dk)}.ka .kpi-icon{background:#fef9c3;color:#b45309}
+  .kpi-num{font-size:22px;font-weight:700;color:var(--slate);line-height:1;margin:0 0 2px}
+  .kpi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:0}
+  /* card */
+  .dc{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
+  .dc-hdr{padding:11px 16px 9px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .dc-title{font-size:12px;font-weight:600;color:var(--slate);display:flex;align-items:center;gap:6px}
+  .dc-title i{color:var(--teal);font-size:11px}
+  /* table */
+  .dt{width:100%;border-collapse:collapse;font-size:12px}
+  .dt th{padding:7px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);background:#f8fafc;white-space:nowrap}
+  .dt td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--slate);vertical-align:middle}
+  .dt tr:last-child td{border-bottom:none}
+  .dt tr:hover td{background:#f8fafc}
+  /* avatar */
+  .av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+  .av-teal{background:var(--teal)}.av-blue{background:var(--blue)}.av-purple{background:var(--purple)}
+  .cell-user{display:flex;align-items:center;gap:6px}
+  /* badges */
+  .b{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;display:inline-block;white-space:nowrap}
+  .b-admin{background:#fee2e2;color:#991b1b}.b-tecnico{background:#fef9c3;color:#92400e}.b-jefe{background:#d1fae5;color:#065f46}.b-usuario{background:#dbeafe;color:#1d4ed8}
+  .b-activo{background:#d1fae5;color:#065f46}.b-inactivo{background:#f1f5f9;color:#475569}
+  .b-tickets{background:#dbeafe;color:#1d4ed8}.b-zero{background:#f1f5f9;color:#94a3b8}
+  /* accordion */
+  .acc-btn{background:#f8fafc!important;color:var(--slate)!important;font-weight:600;font-size:.875rem;border:1px solid var(--border)!important;border-radius:10px!important;box-shadow:none!important;padding:.7rem 1.1rem;display:flex;align-items:center;gap:6px}
+  .acc-btn:not(.collapsed){background:var(--teal)!important;color:#fff!important;border-color:var(--teal)!important}
+  .acc-btn:not(.collapsed) .area-count{background:rgba(255,255,255,.25)!important;color:#fff!important}
+  .acc-body{border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:0}
+  .acc-item{margin-bottom:6px;border-radius:10px!important;overflow:hidden}
+  </style>
+  {% endblock %}
 
-  /* ── Layout ──────────────────────────────────────────────── */
-  .u-page { background: var(--u-bg); min-height: 100vh; padding: 2rem 1.5rem 4rem; }
+  {% block content %}
+  <div>
 
-  /* ── Header ──────────────────────────────────────────────── */
-  .u-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-  .u-header h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--u-text);
-    letter-spacing: -.02em;
-    margin: 0;
-  }
-  .u-header h1 span { color: var(--u-teal); }
-  .btn-nuevo {
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-    background: var(--u-teal);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: .5rem 1.1rem;
-    font-size: .875rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background .2s, transform .15s;
-  }
-  .btn-nuevo:hover { background: var(--u-teal-dk); transform: translateY(-1px); color: #fff; }
-
-  /* ── Stat cards ──────────────────────────────────────────── */
-  .u-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: 1rem; margin-bottom: 2rem; }
-  .u-stat {
-    background: var(--u-surface);
-    border-radius: var(--u-radius);
-    box-shadow: var(--u-shadow);
-    padding: 1.25rem 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: .25rem;
-    border-top: 4px solid transparent;
-    transition: transform .2s;
-  }
-  .u-stat:hover { transform: translateY(-2px); }
-  .u-stat.purple { border-color: #7c3aed; }
-  .u-stat.blue   { border-color: var(--u-indigo); }
-  .u-stat.teal   { border-color: var(--u-teal); }
-  .u-stat.amber  { border-color: var(--u-amber); }
-  .u-stat__icon  { font-size: 1.4rem; margin-bottom: .2rem; }
-  .u-stat__num   { font-size: 2rem; font-weight: 800; color: var(--u-text); line-height: 1; }
-  .u-stat__label { font-size: .78rem; font-weight: 600; color: var(--u-muted); text-transform: uppercase; letter-spacing: .05em; }
-
-  /* ── Card ────────────────────────────────────────────────── */
-  .u-card {
-    background: var(--u-surface);
-    border-radius: var(--u-radius);
-    box-shadow: var(--u-shadow);
-    margin-bottom: 1.5rem;
-    overflow: hidden;
-    border: 1px solid var(--u-border);
-  }
-  .u-card__head {
-    display: flex;
-    align-items: center;
-    gap: .6rem;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--u-border);
-    font-weight: 700;
-    font-size: .95rem;
-    color: var(--u-text);
-    background: #f8fafc;
-  }
-  .u-card__head i { color: var(--u-teal); font-size: 1rem; }
-
-  /* ── Table ───────────────────────────────────────────────── */
-  .u-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
-  .u-table thead th {
-    background: #f1f5f9;
-    color: var(--u-muted);
-    font-size: .72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    padding: .65rem 1rem;
-    border-bottom: 1px solid var(--u-border);
-    white-space: nowrap;
-  }
-  .u-table tbody tr { transition: background .15s; }
-  .u-table tbody tr:hover { background: #f8fafc; }
-  .u-table tbody td {
-    padding: .75rem 1rem;
-    border-bottom: 1px solid var(--u-border);
-    color: var(--u-text);
-    vertical-align: middle;
-  }
-  .u-table tbody tr:last-child td { border-bottom: none; }
-
-  /* Avatar + nombre */
-  .u-avatar {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: .78rem; font-weight: 700; color: #fff;
-    flex-shrink: 0;
-  }
-  .u-avatar.teal   { background: var(--u-teal); }
-  .u-avatar.indigo { background: var(--u-indigo); }
-  .u-cell-user { display: flex; align-items: center; gap: .6rem; }
-
-  /* Badges */
-  .u-badge {
-    display: inline-block;
-    padding: .2rem .55rem;
-    border-radius: 999px;
-    font-size: .72rem;
-    font-weight: 700;
-    letter-spacing: .03em;
-  }
-  .u-badge.admin    { background: #fef2f2; color: var(--u-red); }
-  .u-badge.tecnico  { background: #fffbeb; color: var(--u-amber); }
-  .u-badge.usuario  { background: #eff6ff; color: var(--u-indigo); }
-  .u-badge.jefe     { background: #f0fdf4; color: var(--u-green); }
-  .u-badge.activo   { background: #f0fdf4; color: var(--u-green); }
-  .u-badge.inactivo { background: #f1f5f9; color: var(--u-muted); }
-  .u-badge.tickets  { background: #f0f9ff; color: #0369a1; }
-  .u-badge.zero     { background: #f1f5f9; color: var(--u-muted); }
-
-  /* Número de fila */
-  .u-num { color: var(--u-muted); font-size: .78rem; font-weight: 600; width: 32px; text-align: center; }
-
-  /* ── Accordion areas ──────────────────────────────────────── */
-  .u-accordion-item { margin-bottom: .5rem; border-radius: 10px !important; overflow: hidden; }
-  .u-accordion-btn {
-    background: #f8fafc !important;
-    color: var(--u-text) !important;
-    font-weight: 600;
-    font-size: .9rem;
-    border: 1px solid var(--u-border) !important;
-    border-radius: 10px !important;
-    box-shadow: none !important;
-    padding: .8rem 1.2rem;
-    gap: .5rem;
-  }
-  .u-accordion-btn:not(.collapsed) {
-    background: var(--u-teal) !important;
-    color: #fff !important;
-    border-color: var(--u-teal) !important;
-  }
-  .u-accordion-btn:not(.collapsed) .area-badge { background: rgba(255,255,255,.25) !important; color: #fff !important; }
-  .u-accordion-btn::after { filter: none; }
-  .u-accordion-body { padding: 0; border: 1px solid var(--u-border); border-top: none; border-radius: 0 0 10px 10px; }
-
-  /* ── Empty state ──────────────────────────────────────────── */
-  .u-empty { text-align: center; padding: 3rem 1rem; color: var(--u-muted); }
-  .u-empty i { font-size: 2.5rem; margin-bottom: .75rem; display: block; opacity: .4; }
-
-  /* ── Responsive ───────────────────────────────────────────── */
-  @media (max-width: 576px) {
-    .u-table thead th:nth-child(n+4) { display: none; }
-    .u-table tbody td:nth-child(n+4) { display: none; }
-  }
-</style>
-{% endblock %}
-
-{% block content %}
-<div class="u-page">
-
-  <!-- HEADER -->
-  <div class="u-header">
-    <h1><i class="fas fa-users me-2"></i>Usuarios <span>del Sistema</span></h1>
-    <a href="{{ url_for('admin.nuevo_usuario') }}" class="btn-nuevo">
-      <i class="fas fa-user-plus"></i> Nuevo usuario
-    </a>
-  </div>
-
-  <!-- STATS -->
-  <div class="u-stats">
-    <div class="u-stat purple">
-      <div class="u-stat__icon">👥</div>
-      <div class="u-stat__num">{{ total_clientes + total_tecnicos }}</div>
-      <div class="u-stat__label">Total usuarios</div>
+    <div class="pg-hdr">
+      <h1 class="pg-title"><i class="fas fa-users"></i>Usuarios del Sistema</h1>
+      <a href="{{ url_for('admin.nuevo_usuario') }}" class="btn btn-primary">
+        <i class="fas fa-user-plus"></i> Nuevo Usuario
+      </a>
     </div>
-    <div class="u-stat blue">
-      <div class="u-stat__icon">🙋</div>
-      <div class="u-stat__num">{{ total_clientes }}</div>
-      <div class="u-stat__label">Usuarios finales</div>
-    </div>
-    <div class="u-stat teal">
-      <div class="u-stat__icon">🛠️</div>
-      <div class="u-stat__num">{{ total_tecnicos }}</div>
-      <div class="u-stat__label">Técnicos / Admins</div>
-    </div>
-    <div class="u-stat amber">
-      <div class="u-stat__icon">🏢</div>
-      <div class="u-stat__num">{{ areas|length }}</div>
-      <div class="u-stat__label">Áreas registradas</div>
-    </div>
-  </div>
 
-  <!-- TÉCNICOS & ADMINS -->
-  <div class="u-card">
-    <div class="u-card__head">
-      <i class="fas fa-user-shield"></i>
-      Equipo de Informática &nbsp;<span style="color:var(--u-muted);font-weight:400">(Técnicos y Admins)</span>
+    {# KPIs #}
+    <div class="kpi-row">
+      <div class="kpi kp">
+        <div class="kpi-icon"><i class="fas fa-users"></i></div>
+        <div class="kpi-num">{{ total_clientes + total_tecnicos }}</div>
+        <div class="kpi-lbl">Total Usuarios</div>
+      </div>
+      <div class="kpi kb">
+        <div class="kpi-icon"><i class="fas fa-user"></i></div>
+        <div class="kpi-num">{{ total_clientes }}</div>
+        <div class="kpi-lbl">Usuarios Finales</div>
+      </div>
+      <div class="kpi kt">
+        <div class="kpi-icon"><i class="fas fa-user-shield"></i></div>
+        <div class="kpi-num">{{ total_tecnicos }}</div>
+        <div class="kpi-lbl">Técnicos / Admins</div>
+      </div>
+      <div class="kpi ka">
+        <div class="kpi-icon"><i class="fas fa-building"></i></div>
+        <div class="kpi-num">{{ areas|length }}</div>
+        <div class="kpi-lbl">Áreas</div>
+      </div>
     </div>
-    {% if tecnicos %}
-    <div class="table-responsive">
-      <table class="u-table">
-        <thead>
-          <tr>
-            <th class="u-num">#</th>
-            <th>Nombre</th>
-            <th>Email</th>
-            <th>Área</th>
-            <th>Teléfono</th>
-            <th>Rol</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for t in tecnicos %}
-          <tr>
-            <td class="u-num">{{ loop.index }}</td>
-            <td>
-              <div class="u-cell-user">
-                <div class="u-avatar teal">{{ t.nombre_completo[0] | upper }}</div>
-                <strong>{{ t.nombre_completo }}</strong>
-              </div>
-            </td>
-            <td><small style="color:var(--u-muted)">{{ t.email }}</small></td>
-            <td>{{ t.area or '—' }}</td>
-            <td>{{ t.telefono or '—' }}</td>
-            <td>
-              {% set r = t.rol_nombre | lower %}
-              <span class="u-badge {{ r }}">{{ t.rol_nombre | capitalize }}</span>
-            </td>
-            <td>
-              <span class="u-badge {% if t.activo %}activo{% else %}inactivo{% endif %}">
-                {{ 'Activo' if t.activo else 'Inactivo' }}
-              </span>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <div class="u-empty"><i class="fas fa-user-slash"></i>Sin técnicos registrados</div>
-    {% endif %}
-  </div>
 
-  <!-- USUARIOS POR ÁREA (acordeón) -->
-  <div class="u-card">
-    <div class="u-card__head">
-      <i class="fas fa-sitemap"></i>
-      Usuarios por Área de Trabajo
-    </div>
-    <div style="padding:1rem">
-      {% if areas %}
-      <div class="accordion" id="acordeonAreas">
-        {% for area, lista in areas.items() %}
-        <div class="accordion-item border-0 u-accordion-item">
-          <h2 class="accordion-header">
-            <button class="accordion-button u-accordion-btn {% if not loop.first %}collapsed{% endif %}"
-                    type="button" data-bs-toggle="collapse"
-                    data-bs-target="#area{{ loop.index }}"
-                    aria-expanded="{{ 'true' if loop.first else 'false' }}">
-              <i class="fas fa-building" style="color:inherit;opacity:.7"></i>
-              {{ area }}
-              <span class="area-badge u-badge usuario ms-2">{{ lista|length }}</span>
-            </button>
-          </h2>
-          <div id="area{{ loop.index }}"
-               class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
-               data-bs-parent="#acordeonAreas">
-            <div class="u-accordion-body">
-              <table class="u-table">
-                <thead>
-                  <tr>
-                    <th class="u-num">#</th>
-                    <th>Nombre</th>
-                    <th>Email</th>
-                    <th>Teléfono</th>
-                    <th>Tickets</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for u in lista %}
-                  <tr>
-                    <td class="u-num">{{ loop.index }}</td>
-                    <td>
-                      <div class="u-cell-user">
-                        <div class="u-avatar indigo">{{ u.nombre_completo[0] | upper }}</div>
-                        {{ u.nombre_completo }}
-                      </div>
-                    </td>
-                    <td><small style="color:var(--u-muted)">{{ u.email }}</small></td>
-                    <td>{{ u.telefono or '—' }}</td>
-                    <td>
-                      <span class="u-badge {% if u.total_tickets > 0 %}tickets{% else %}zero{% endif %}">
-                        {{ u.total_tickets }}
-                      </span>
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        {% endfor %}
+    {# TÉCNICOS Y ADMINS #}
+    <div class="dc">
+      <div class="dc-hdr">
+        <span class="dc-title"><i class="fas fa-user-shield"></i>Equipo de Informática — Técnicos y Admins</span>
+        <span style="font-size:11px;color:var(--muted)">{{ tecnicos|length }} registros</span>
+      </div>
+      {% if tecnicos %}
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead>
+            <tr>
+              <th>#</th><th>Nombre</th><th>Email</th>
+              <th>Área</th><th>Teléfono</th><th>Rol</th><th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in tecnicos %}
+            <tr>
+              <td style="color:var(--muted);font-size:11px;width:32px;text-align:center">{{ loop.index }}</td>
+              <td>
+                <div class="cell-user">
+                  <div class="av av-teal">{{ (t.nombre_completo or 'T')[:1]|upper }}</div>
+                  <strong style="font-size:12px">{{ t.nombre_completo }}</strong>
+                </div>
+              </td>
+              <td style="font-size:11px;color:var(--muted)">{{ t.email }}</td>
+              <td style="font-size:12px">{{ t.area or '—' }}</td>
+              <td style="font-size:12px">{{ t.telefono or '—' }}</td>
+              <td>
+                {% set r=(t.rol_nombre or 'usuario')|lower %}
+                {% set rol_cls={'admin':'b-admin','tecnico':'b-tecnico','jefe':'b-jefe'} %}
+                <span class="b {{ rol_cls.get(r,'b-usuario') }}">{{ (t.rol_nombre or 'Usuario')|capitalize }}</span>
+              </td>
+              <td>
+                <span class="b {% if t.activo %}b-activo{% else %}b-inactivo{% endif %}">
+                  {{ 'Activo' if t.activo else 'Inactivo' }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
       {% else %}
-      <div class="u-empty"><i class="fas fa-inbox"></i>Sin usuarios finales registrados</div>
+      <div style="text-align:center;padding:28px;color:var(--muted);font-size:13px">
+        <i class="fas fa-user-slash me-2"></i>Sin técnicos registrados
+      </div>
       {% endif %}
     </div>
-  </div>
 
-</div>
-{% endblock %}
+    {# USUARIOS POR ÁREA (acordeón) #}
+    <div class="dc">
+      <div class="dc-hdr">
+        <span class="dc-title"><i class="fas fa-sitemap"></i>Usuarios por Área de Trabajo</span>
+        <span style="font-size:11px;color:var(--muted)">{{ clientes|length }} usuarios</span>
+      </div>
+      <div style="padding:12px 14px">
+        {% if areas %}
+        <div class="accordion" id="acordeonAreas">
+          {% for area, lista in areas.items() %}
+          <div class="accordion-item border-0 acc-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button acc-btn {% if not loop.first %}collapsed{% endif %}"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#area{{ loop.index }}"
+                      aria-expanded="{{ 'true' if loop.first else 'false' }}">
+                <i class="fas fa-building" style="opacity:.7;font-size:12px"></i>
+                {{ area }}
+                <span class="area-count b b-usuario ms-2">{{ lista|length }}</span>
+              </button>
+            </h2>
+            <div id="area{{ loop.index }}"
+                class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
+                data-bs-parent="#acordeonAreas">
+              <div class="acc-body">
+                <table class="dt">
+                  <thead>
+                    <tr>
+                      <th>#</th><th>Nombre</th><th>Email</th>
+                      <th>Teléfono</th><th>Tickets</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for u in lista %}
+                    <tr>
+                      <td style="color:var(--muted);font-size:11px;width:32px;text-align:center">{{ loop.index }}</td>
+                      <td>
+                        <div class="cell-user">
+                          <div class="av av-blue">{{ (u.nombre_completo or 'U')[:1]|upper }}</div>
+                          <span style="font-size:12px">{{ u.nombre_completo }}</span>
+                        </div>
+                      </td>
+                      <td style="font-size:11px;color:var(--muted)">{{ u.email }}</td>
+                      <td style="font-size:12px">{{ u.telefono or '—' }}</td>
+                      <td>
+                        {# FIX: usa default(0) para evitar UndefinedError si no viene el campo #}
+                        {% set total_t = u.total_tickets|default(0) %}
+                        <span class="b {% if total_t > 0 %}b-tickets{% else %}b-zero{% endif %}">
+                          {{ total_t }}
+                        </span>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:28px;color:var(--muted);font-size:13px">
+          <i class="fas fa-inbox me-2"></i>Sin usuarios finales registrados
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+  {% endblock %}

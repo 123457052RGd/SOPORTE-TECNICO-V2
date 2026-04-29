@@ -1,286 +1,619 @@
 {% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
 
-{% block title %}Dashboard - Administrador{% endblock %}
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --teal:      #0d9488; --teal-dk: #0f766e; --teal-lt: #e0fdf4; --teal-mid: #99f6e4;
+  --slate:     #1e293b; --slate-md: #334155; --muted: #64748b; --border: #e2e8f0;
+  --surface:   #ffffff; --page-bg: #f0f4f8;
+  --blue:      #3b82f6; --amber: #f59e0b; --green: #22c55e;
+  --slate-soft:#94a3b8; --purple: #8b5cf6;
+  --sh-card:   0 1px 4px rgba(0,0,0,.06), 0 4px 20px rgba(0,0,0,.04);
+  --sh-hover:  0 8px 32px rgba(0,0,0,.10);
+  --sh-teal:   0 4px 20px rgba(13,148,136,.18);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { background: var(--page-bg); font-family: 'DM Sans', system-ui, sans-serif; }
+
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(13,148,136,.08) 0%, transparent 42%),
+    radial-gradient(circle at 88% 88%, rgba(59,130,246,.05) 0%, transparent 42%);
+}
+
+/* ── BIENVENIDA ─────────────────────────────── */
+.welcome-bar {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dk));
+  border-radius: 20px;
+  padding: 22px 28px;
+  margin-bottom: 20px;
+  box-shadow: var(--sh-teal), inset 0 1px 0 rgba(255,255,255,.1);
+  overflow: hidden;
+}
+
+.welcome-bar::before {
+  content: ''; position: absolute;
+  top: -40px; right: -40px;
+  width: 180px; height: 180px;
+  background: rgba(255,255,255,.06); border-radius: 50%;
+}
+.welcome-bar::after {
+  content: ''; position: absolute;
+  bottom: -50px; left: 30%;
+  width: 220px; height: 220px;
+  background: rgba(255,255,255,.04); border-radius: 50%;
+}
+
+.welcome-left { position: relative; z-index: 1; }
+
+.welcome-greeting {
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,.7);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
+}
+
+.welcome-name {
+  font-size: 24px; font-weight: 800; color: #fff;
+  letter-spacing: -.5px; line-height: 1.1; margin-bottom: 5px;
+}
+
+.welcome-role {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,.15); color: rgba(255,255,255,.9);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 20px; padding: 3px 12px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+}
+
+.welcome-right {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+
+/* Reloj */
+.rw {
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #fff; border-radius: 14px;
+  padding: 10px 18px; text-align: center; min-width: 152px;
+}
+.rw #reloj-hora {
+  font-size: 22px; font-weight: 700; letter-spacing: 2px;
+  font-family: 'DM Mono', monospace; line-height: 1.2;
+}
+.rw #reloj-fecha { font-size: 10px; opacity: .75; margin: 2px 0; font-weight: 500; }
+.rw #reloj-horario {
+  font-size: 10px; padding: 2px 10px; border-radius: 20px;
+  display: inline-block; margin-top: 4px; font-weight: 700;
+  background: rgba(255,255,255,.15);
+}
+.rw #reloj-horario.activo  { background: rgba(74,222,128,.35); }
+.rw #reloj-horario.inactivo{ background: rgba(239,68,68,.35); }
+
+/* ── KPI ROW ─────────────────────────────────── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 14px; margin-bottom: 20px;
+  position: relative; z-index: 1;
+}
+
+.kpi {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 18px; padding: 20px 18px;
+  position: relative; overflow: hidden;
+  transition: all .22s; cursor: default;
+  box-shadow: var(--sh-card);
+}
+.kpi:hover { transform: translateY(-4px); box-shadow: var(--sh-hover); }
+
+.kpi::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 4px; border-radius: 18px 18px 0 0;
+}
+.kpi::after {
+  content: ''; position: absolute; bottom: -18px; right: -18px;
+  width: 70px; height: 70px; border-radius: 50%; opacity: .06;
+}
+
+.kb::before { background: linear-gradient(90deg, #3b82f6, #93c5fd); } .kb::after { background: #3b82f6; }
+.kg::before { background: linear-gradient(90deg, #22c55e, #86efac); } .kg::after { background: #22c55e; }
+.ka::before { background: linear-gradient(90deg, #f59e0b, #fcd34d); } .ka::after { background: #f59e0b; }
+.ks::before { background: linear-gradient(90deg, #94a3b8, #cbd5e1); } .ks::after { background: #94a3b8; }
+.kp::before { background: linear-gradient(90deg, #8b5cf6, #c4b5fd); } .kp::after { background: #8b5cf6; }
+.kt::before { background: linear-gradient(90deg, #0d9488, #5eead4); } .kt::after { background: #0d9488; }
+
+.kpi-icon {
+  width: 38px; height: 38px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; margin-bottom: 12px;
+}
+.kb .kpi-icon { background: #dbeafe; color: #1d4ed8; }
+.kg .kpi-icon { background: #dcfce7; color: #15803d; }
+.ka .kpi-icon { background: #fef9c3; color: #a16207; }
+.ks .kpi-icon { background: #f1f5f9; color: #475569; }
+.kp .kpi-icon { background: #ede9fe; color: #6d28d9; }
+.kt .kpi-icon { background: var(--teal-lt); color: var(--teal-dk); }
+
+.kpi-num {
+  font-size: 32px; font-weight: 800; color: var(--slate);
+  line-height: 1; margin: 0 0 4px;
+  letter-spacing: -1.5px; font-variant-numeric: tabular-nums;
+}
+.kpi-lbl {
+  font-size: 10px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .6px; font-weight: 700; margin: 0;
+}
+
+/* ── GRÁFICAS ────────────────────────────────── */
+.charts-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin-bottom: 16px; position: relative; z-index: 1;
+}
+@media(max-width:768px) { .charts-row { grid-template-columns: 1fr; } }
+
+.main-row {
+  display: grid; grid-template-columns: 1fr 308px;
+  gap: 16px; margin-bottom: 16px; position: relative; z-index: 1;
+}
+@media(max-width:1024px) { .main-row { grid-template-columns: 1fr; } }
+
+/* ── CARDS ───────────────────────────────────── */
+.dc {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 18px; overflow: hidden;
+  box-shadow: var(--sh-card); transition: box-shadow .2s;
+}
+.dc:hover { box-shadow: 0 6px 28px rgba(0,0,0,.08); }
+
+.dc-hdr {
+  padding: 15px 18px 13px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(180deg, #f9fbff 0%, var(--surface) 100%);
+}
+.dc-title {
+  font-size: 11px; font-weight: 700; color: var(--slate);
+  display: flex; align-items: center; gap: 8px;
+  text-transform: uppercase; letter-spacing: .6px;
+}
+.dc-title .ico {
+  width: 26px; height: 26px; background: var(--teal-lt); color: var(--teal);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+}
+.dc-link {
+  font-size: 11px; color: var(--teal); text-decoration: none; font-weight: 700;
+  display: flex; align-items: center; gap: 4px; padding: 5px 12px;
+  border-radius: 8px; transition: all .14s; border: 1px solid transparent;
+}
+.dc-link:hover { background: var(--teal-lt); color: var(--teal-dk); border-color: var(--teal-mid); }
+.dc-body { padding: 16px 18px; }
+
+/* ── TABLA ───────────────────────────────────── */
+.dt { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.dt th {
+  padding: 10px 13px; text-align: left; font-size: 10px; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .5px;
+  border-bottom: 2px solid var(--border); background: #f8fafc; white-space: nowrap;
+}
+.dt td {
+  padding: 11px 13px; border-bottom: 1px solid #f1f5f9;
+  color: var(--slate-md); vertical-align: middle;
+}
+.dt tr:last-child td { border-bottom: none; }
+.dt tbody tr { transition: background .12s; }
+.dt tbody tr:hover td { background: linear-gradient(90deg, #f0fdf9, #f8fffd); }
+
+.folio {
+  font-weight: 700; color: var(--teal-dk); font-size: 11px;
+  font-family: 'DM Mono', monospace; background: var(--teal-lt);
+  padding: 4px 9px; border-radius: 7px; display: inline-block;
+  border: 1px solid var(--teal-mid);
+}
+
+/* ── BADGES ──────────────────────────────────── */
+.b {
+  padding: 4px 11px; border-radius: 20px; font-size: 11px;
+  font-weight: 700; display: inline-block; white-space: nowrap;
+}
+.b-area    { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+.b-abierto { background: #dbeafe; color: #1d4ed8; }
+.b-proceso { background: #fef3c7; color: #92400e; }
+.b-resuelto{ background: #d1fae5; color: #065f46; }
+.b-cerrado { background: #f1f5f9; color: #475569; }
+.b-prio    { color: #fff; font-weight: 700; }
+
+.btn-ojo {
+  width: 30px; height: 30px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--teal-lt); color: var(--teal-dk);
+  border: 1px solid var(--teal-mid); text-decoration: none;
+  font-size: 12px; transition: all .15s;
+}
+.btn-ojo:hover {
+  background: var(--teal); color: #fff; border-color: var(--teal);
+  transform: scale(1.1); box-shadow: 0 3px 12px rgba(13,148,136,.35);
+}
+
+/* ── TÉCNICOS WIDGET ─────────────────────────── */
+.tec-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 8px; padding: 9px 11px; border-radius: 11px; transition: background .12s;
+}
+.tec-row:hover { background: #f8fafc; }
+
+.tec-av {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+  text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+.tec-info { flex: 1; min-width: 0; }
+.tec-name { font-size: 12px; font-weight: 600; color: var(--slate); display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.tec-meta { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.tec-prog { height: 4px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.tec-fill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+.tec-cnt  { font-size: 17px; font-weight: 800; color: var(--slate); min-width: 22px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ── MINI STATS ──────────────────────────────── */
+.ms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.ms {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 1px solid var(--border); border-radius: 11px;
+  padding: 11px 8px; text-align: center; transition: all .15s;
+}
+.ms:hover { border-color: var(--teal-mid); background: var(--teal-lt); transform: translateY(-2px); box-shadow: 0 3px 12px rgba(13,148,136,.1); }
+.ms-num { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ms-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; font-weight: 700; }
+
+/* ── EQUIPOS POR ÁREA ────────────────────────── */
+.eq-row { margin-bottom: 10px; }
+.eq-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; align-items: center; }
+.eq-name { color: var(--slate-md); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 188px; font-size: 11px; }
+.eq-cnt  { font-size: 12px; font-weight: 700; color: var(--teal); background: var(--teal-lt); padding: 2px 10px; border-radius: 20px; flex-shrink: 0; border: 1px solid var(--teal-mid); }
+
+/* ── ANIMACIONES ─────────────────────────────── */
+@keyframes pulse-update { 0%{opacity:1} 50%{opacity:.65} 100%{opacity:1} }
+.updating { animation: pulse-update .5s ease; }
+
+@keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.kpi { animation: slideUp .32s ease both; }
+.kpi:nth-child(1){animation-delay:.04s} .kpi:nth-child(2){animation-delay:.08s}
+.kpi:nth-child(3){animation-delay:.12s} .kpi:nth-child(4){animation-delay:.16s}
+.kpi:nth-child(5){animation-delay:.20s} .kpi:nth-child(6){animation-delay:.24s}
+.kpi:nth-child(7){animation-delay:.28s}
+.dc { animation: slideUp .38s ease both; animation-delay: .12s; }
+.welcome-bar { animation: slideUp .28s ease both; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-4">
+<div>
 
-  <!-- ENCABEZADO + RELOJ -->
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-    <div>
-      <h1 class="mb-0 fw-bold">
-        <i class="fas fa-chart-line me-2"></i>Dashboard Administrativo
-      </h1>
-      <small class="text-muted">Sistema ITIL Helpdesk — DIF</small>
+  {# ── BIENVENIDA ── #}
+  <div class="welcome-bar">
+    <div class="welcome-left">
+      <div class="welcome-greeting">Panel de control</div>
+      <div class="welcome-name">
+        ¡Bienvenido, {{ session.nombre.split()[0] if session.nombre else 'Usuario' }}!
+      </div>
+      <div class="welcome-role">
+        {% set rol_labels = {'admin':'Administrador','tecnico':'Técnico','jefe':'Jefe de Informática','usuario':'Usuario'} %}
+        <i class="fas
+          {% if session.rol == 'admin' %}fa-shield-alt
+          {% elif session.rol == 'tecnico' %}fa-tools
+          {% elif session.rol == 'jefe' %}fa-user-tie
+          {% else %}fa-user{% endif %}"></i>
+        {{ rol_labels.get(session.rol, session.rol|capitalize if session.rol else '') }}
+      </div>
     </div>
-
-    <div class="reloj-widget">
-      <div id="reloj-hora">00:00:00</div>
-      <div id="reloj-fecha"></div>
-      <div id="reloj-horario" class="horario-badge">Cargando...</div>
+    <div class="welcome-right">
+      <div class="rw">
+        <div id="reloj-hora">00:00:00</div>
+        <div id="reloj-fecha"></div>
+        <div id="reloj-horario">Cargando...</div>
+      </div>
     </div>
   </div>
 
-  <!-- FILA 1: TICKETS -->
-  <div class="row g-3 mb-3">
-
-    <div class="col-6 col-md-2">
-      <div class="stat-card" style="background:linear-gradient(135deg,#00bcd4,#0097a7);">
-        <div class="stat-icon"><i class="fas fa-ticket-alt"></i></div>
-        <div class="stat-num">{{ stats.total }}</div>
-        <div class="stat-label">Total Tickets</div>
-      </div>
+  {# ── KPIs ── #}
+  <div class="kpi-row">
+    <div class="kpi kb">
+      <div class="kpi-icon"><i class="fas fa-ticket-alt"></i></div>
+      <div class="kpi-num">{{ stats.total }}</div>
+      <div class="kpi-lbl">Total Tickets</div>
     </div>
-
+    {% set cls_m={'Abierto':'kb','En Proceso':'ka','Resuelto':'kg','Cerrado':'ks'} %}
+    {% set ico_m={'Abierto':'fa-folder-open','En Proceso':'fa-spinner','Resuelto':'fa-check-circle','Cerrado':'fa-lock'} %}
     {% for estado in stats.por_estado %}
-    <div class="col-6 col-md-2">
-      <div class="stat-card" style="background:linear-gradient(135deg,{{ estado.color }},{{ estado.color }}cc);">
-        <div class="stat-num">{{ estado.cantidad }}</div>
-        <div class="stat-label">{{ estado.nombre }}</div>
-      </div>
+    <div class="kpi {{ cls_m.get(estado.nombre,'ks') }}">
+      <div class="kpi-icon"><i class="fas {{ ico_m.get(estado.nombre,'fa-circle') }}"></i></div>
+      <div class="kpi-num" style="color:{{ estado.color }}">{{ estado.cantidad }}</div>
+      <div class="kpi-lbl">{{ estado.nombre }}</div>
     </div>
     {% endfor %}
-
-    <div class="col-6 col-md-2">
-      <div class="stat-card" style="background:linear-gradient(135deg,#7b1fa2,#6a1b9a);">
-        <div class="stat-icon"><i class="fas fa-users"></i></div>
-        <div class="stat-num">{{ total_usuarios }}</div>
-        <div class="stat-label">Usuarios</div>
-      </div>
+    <div class="kpi kp">
+      <div class="kpi-icon"><i class="fas fa-users"></i></div>
+      <div class="kpi-num">{{ total_usuarios }}</div>
+      <div class="kpi-lbl">Usuarios</div>
     </div>
-
-    <div class="col-6 col-md-2">
-      <div class="stat-card" style="background:linear-gradient(135deg,#1565c0,#0d47a1);">
-        <div class="stat-icon"><i class="fas fa-desktop"></i></div>
-        <div class="stat-num">{{ total_equipos }}</div>
-        <div class="stat-label">Equipos</div>
-      </div>
+    <div class="kpi kt">
+      <div class="kpi-icon"><i class="fas fa-desktop"></i></div>
+      <div class="kpi-num">{{ total_equipos }}</div>
+      <div class="kpi-lbl">Equipos</div>
     </div>
-
   </div>
 
-  <!-- FILA 2: GRÁFICAS -->
-  <div class="row g-3 mb-3">
-
-    <div class="col-md-5">
-      <div class="card h-100">
-        <div class="card-header">
-          <i class="fas fa-chart-pie me-2"></i>Tickets por Prioridad
-        </div>
-        <div class="card-body d-flex align-items-center justify-content-center">
-          <canvas id="chartPrioridad" style="max-height:220px;"></canvas>
-        </div>
+  {# ── GRÁFICAS ── #}
+  <div class="charts-row">
+    <div class="dc">
+      <div class="dc-hdr">
+        <span class="dc-title"><span class="ico"><i class="fas fa-chart-pie"></i></span>Tickets por Prioridad</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:700;background:#f1f5f9;padding:3px 10px;border-radius:6px;letter-spacing:.3px">Distribución</span>
+      </div>
+      <div class="dc-body" style="padding:14px 22px">
+        <div id="wrap-prioridad"><canvas id="chartPrioridad" style="max-height:205px"></canvas></div>
       </div>
     </div>
-
-    <div class="col-md-7">
-      <div class="card h-100">
-        <div class="card-header">
-          <i class="fas fa-chart-bar me-2"></i>Tickets por Tipo de Problema
-        </div>
-        <div class="card-body">
-          <canvas id="chartTipo" style="max-height:220px;"></canvas>
-        </div>
+    <div class="dc">
+      <div class="dc-hdr">
+        <span class="dc-title"><span class="ico"><i class="fas fa-chart-bar"></i></span>Tipo de Problema</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:700;background:#f1f5f9;padding:3px 10px;border-radius:6px;letter-spacing:.3px">Conteo</span>
+      </div>
+      <div class="dc-body" style="padding:14px 22px">
+        <div id="wrap-tipo"><canvas id="chartTipo" style="max-height:205px"></canvas></div>
       </div>
     </div>
-
   </div>
 
-  <!-- FILA 3: TICKETS RECIENTES -->
-  <div class="row g-3">
-    <div class="col-12">
+  {# ── TABLA + SIDEBAR ── #}
+  <div class="main-row">
 
-      <div class="card">
+    <div class="dc">
+      <div class="dc-hdr">
+        <span class="dc-title"><span class="ico"><i class="fas fa-clock"></i></span>Tickets Recientes</span>
+        <a href="{{ url_for('admin.tickets') }}" class="dc-link">
+          Ver todos <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead>
+            <tr>
+              <th>Folio</th><th>Usuario</th><th>Área</th><th>Título</th>
+              <th>Prioridad</th><th>Estado</th><th>Técnico</th><th>Fecha</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ticket in tickets_recientes %}
+            <tr>
+              <td><span class="folio">{{ ticket.folio }}</span></td>
+              <td style="font-size:11.5px;white-space:nowrap;font-weight:600">{{ ticket.nombre_usuario }}</td>
+              <td><span class="b b-area" style="font-size:10px">{{ ticket.area_usuario }}</span></td>
+              <td style="max-width:165px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">
+                {{ ticket.titulo[:45] }}{% if ticket.titulo|length > 45 %}…{% endif %}
+              </td>
+              <td>
+                <span class="b b-prio" style="background:{{ ticket.color_prioridad }};box-shadow:0 2px 8px {{ ticket.color_prioridad }}44">
+                  {{ ticket.prioridad }}
+                </span>
+              </td>
+              <td>
+                {% set ec={'Abierto':'b-abierto','En Proceso':'b-proceso','Resuelto':'b-resuelto','Cerrado':'b-cerrado'} %}
+                <span class="b {{ ec.get(ticket.estado,'b-cerrado') }}">{{ ticket.estado }}</span>
+              </td>
+              <td style="font-size:11px">
+                {% if ticket.nombre_tecnico %}
+                  <span style="background:#f0fdf4;color:#15803d;padding:3px 9px;border-radius:6px;font-weight:700;font-size:11px;border:1px solid #bbf7d0">
+                    {{ ticket.nombre_tecnico }}
+                  </span>
+                {% else %}
+                  <span style="color:#cbd5e1;font-size:14px">—</span>
+                {% endif %}
+              </td>
+              <td style="font-size:11px;white-space:nowrap">
+                <span style="font-weight:700;color:var(--slate-md)">{{ ticket.fecha_creacion[:10] }}</span><br>
+                <span style="font-size:10px;color:var(--muted)">{{ ticket.fecha_creacion[11:19] if ticket.fecha_creacion|length > 10 else '' }}</span>
+              </td>
+              <td>
+                <a href="{{ url_for('admin.ver_ticket', id_ticket=ticket.id_ticket) }}" class="btn-ojo" title="Ver ticket">
+                  <i class="fas fa-eye"></i>
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">
+                <i class="fas fa-inbox" style="font-size:2rem;opacity:.2;display:block;margin-bottom:10px"></i>
+                Sin tickets registrados
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <span>
-            <i class="fas fa-clock me-2"></i>Tickets Recientes
-          </span>
-          <a href="{{ url_for('admin.tickets') }}" class="btn btn-sm btn-light">
-            Ver todos <i class="fas fa-arrow-right ms-1"></i>
-          </a>
+    {# ── SIDEBAR ── #}
+    <div style="display:flex;flex-direction:column;gap:16px">
+
+      <div class="dc" id="widget-tec-carga">
+        <div class="dc-hdr">
+          <span class="dc-title"><span class="ico"><i class="fas fa-user-cog"></i></span>Carga por Técnico</span>
+          <a href="{{ url_for('admin.usuarios') }}" class="dc-link">Ver todos</a>
         </div>
-
-        <div class="card-body p-0">
-
-          <div class="table-responsive">
-            <table class="table table-hover mb-0">
-
-              <thead>
-                <tr>
-                  <th>Folio</th>
-                  <th>Usuario</th>
-                  <th>Área</th>
-                  <th>Título</th>
-                  <th>Prioridad</th>
-                  <th>Estado</th>
-                  <th>Fecha y Hora</th>
-                  <th>Acción</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {% for ticket in tickets_recientes %}
-                <tr>
-
-                  <td><strong>{{ ticket.folio }}</strong></td>
-                  <td>{{ ticket.nombre_usuario }}</td>
-
-                  <td>
-                    <span class="badge bg-secondary">
-                      {{ ticket.area_usuario }}
+        <div class="dc-body"><div id="tec-lista">
+          {% if tecnicos_carga %}
+            {% for tec in tecnicos_carga %}
+            <div class="tec-row">
+              <div class="tec-av" style="background:{{ tec.color }}">{{ tec.initials }}</div>
+              <div class="tec-info">
+                <div class="tec-name">
+                  <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:108px">{{ tec.nombre }}</span>
+                  {% if tec.activos > 0 %}
+                    <span style="font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700;background:#d1fae5;color:#065f46;border:1px solid #a7f3d0">
+                      {{ tec.activos }} activo{{ 's' if tec.activos != 1 else '' }}
                     </span>
-                  </td>
-
-                  <td>
-                    {{ ticket.titulo[:45] }}
-                    {% if ticket.titulo|length > 45 %}…{% endif %}
-                  </td>
-
-                  <td>
-                    <span class="badge" style="background:{{ ticket.color_prioridad }};">
-                      {{ ticket.prioridad }}
-                    </span>
-                  </td>
-
-                  <td>
-                    <span class="badge" style="background:{{ ticket.color_estado }};">
-                      {{ ticket.estado }}
-                    </span>
-                  </td>
-
-                  <td>
-                    <small>
-                      <i class="fas fa-calendar-alt me-1 text-muted"></i>
-                      {{ ticket.fecha_creacion[:10] }}<br>
-                      <i class="fas fa-clock me-1 text-muted"></i>
-                      <strong>
-                        {{ ticket.fecha_creacion[11:19] if ticket.fecha_creacion|length > 10 else '—' }}
-                      </strong>
-                    </small>
-                  </td>
-
-                  <td>
-                    <a href="{{ url_for('admin.ver_ticket', id_ticket=ticket.id_ticket) }}" class="btn btn-sm btn-primary">
-                      <i class="fas fa-eye"></i>
-                    </a>
-                  </td>
-
-                </tr>
-                {% endfor %}
-              </tbody>
-
-            </table>
+                  {% else %}
+                    <span style="font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700;background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0">Libre</span>
+                  {% endif %}
+                </div>
+                <div class="tec-meta">{{ tec.total }} ticket{{ 's' if tec.total != 1 else '' }} en total</div>
+                <div class="tec-prog">
+                  <div class="tec-fill" style="width:{{ tec.pct }}%;background:{{ tec.color }}"></div>
+                </div>
+              </div>
+              <div class="tec-cnt">{{ tec.activos }}</div>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div style="text-align:center;padding:22px;color:var(--muted);font-size:12px">
+            <i class="fas fa-user-slash" style="opacity:.22;display:block;font-size:1.6rem;margin-bottom:8px"></i>
+            Sin técnicos registrados
           </div>
+          {% endif %}
 
+          </div>
+          <div id="mini-stats-grid" class="ms-grid">
+            {% set mc={'Abierto':'#3b82f6','En Proceso':'#f59e0b','Resuelto':'#22c55e','Cerrado':'#94a3b8'} %}
+            {% for estado in stats.por_estado %}
+            <div class="ms">
+              <div class="ms-num" style="color:{{ mc.get(estado.nombre,'#64748b') }}">{{ estado.cantidad }}</div>
+              <div class="ms-lbl">{{ estado.nombre }}</div>
+            </div>
+            {% endfor %}
+          </div>
         </div>
-
       </div>
 
-    </div>
-  </div>
+      {% if equipos_por_area %}
+      <div class="dc">
+        <div class="dc-hdr">
+          <span class="dc-title"><span class="ico"><i class="fas fa-desktop"></i></span>Equipos por Área</span>
+          <a href="{{ url_for('admin.equipos') }}" class="dc-link">Ver todos</a>
+        </div>
+        <div class="dc-body">
+          {% set max_val = equipos_por_area[0].cantidad if equipos_por_area else 1 %}
+          {% for eq in equipos_por_area %}
+          {% set area_name = eq.area or eq.AREA or 'Sin área' %}
+          <div class="eq-row">
+            <div class="eq-top">
+              <span class="eq-name">{{ area_name }}</span>
+              <span class="eq-cnt">{{ eq.cantidad }}</span>
+            </div>
+            <div class="tec-prog">
+              <div class="tec-fill" style="width:{{ (eq.cantidad/max_val*100)|int }}%;background:linear-gradient(90deg,var(--teal),var(--teal-mid))"></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
 
-  <!-- FOOTER -->
-  <div class="text-center mt-4 py-3 border-top text-muted small">
-    ITIL Helpdesk - Sistema DIF de Soporte Técnico © 2026
+    </div>
   </div>
 
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+  const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
-    // ================= RELOJ =================
-    const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-    const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-    const HORA_INICIO = 9, HORA_FIN = 21;
+  function tick() {
+    const n=new Date(), h=n.getHours(), m=n.getMinutes(), s=n.getSeconds();
+    const eH=document.getElementById('reloj-hora'), eF=document.getElementById('reloj-fecha'), eB=document.getElementById('reloj-horario');
+    if(!eH) return;
+    eH.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    eF.textContent = DIAS[n.getDay()]+', '+n.getDate()+' de '+MESES[n.getMonth()]+' de '+n.getFullYear();
+    if(h>=9&&h<21){eB.textContent='🟢 Servicio activo';eB.className='activo';}
+    else{eB.textContent='🔴 Fuera de horario';eB.className='inactivo';}
+  }
+  tick(); setInterval(tick, 1000);
 
-    function actualizarReloj() {
-        const ahora = new Date();
-        const h = ahora.getHours(), m = ahora.getMinutes(), s = ahora.getSeconds();
-
-        const hora = document.getElementById('reloj-hora');
-        const fecha = document.getElementById('reloj-fecha');
-        const badge = document.getElementById('reloj-horario');
-
-        if (!hora || !fecha || !badge) return;
-
-        hora.textContent =
-            String(h).padStart(2,'0') + ':' +
-            String(m).padStart(2,'0') + ':' +
-            String(s).padStart(2,'0');
-
-        fecha.textContent =
-            DIAS[ahora.getDay()] + ', ' +
-            ahora.getDate() + ' de ' +
-            MESES[ahora.getMonth()] + ' de ' +
-            ahora.getFullYear();
-
-        if (h >= HORA_INICIO && h < HORA_FIN) {
-            badge.textContent = '🟢 Servicio activo';
-            badge.className = 'horario-badge activo';
-        } else {
-            badge.textContent = '🔴 Fuera de horario';
-            badge.className = 'horario-badge inactivo';
-        }
+  const c1 = document.getElementById('chartPrioridad');
+  if(c1){
+    const d1 = {{ stats.por_prioridad|map(attribute='cantidad')|list|tojson }};
+    if(d1.some(v=>v>0)){
+      new Chart(c1,{type:'doughnut',data:{
+        labels:{{ stats.por_prioridad|map(attribute='nombre')|list|tojson }},
+        datasets:[{data:d1,backgroundColor:{{ stats.por_prioridad|map(attribute='color')|list|tojson }},borderWidth:3,borderColor:'#fff',hoverOffset:8,borderRadius:4}]
+      },options:{responsive:true,cutout:'65%',plugins:{
+        legend:{position:'right',labels:{font:{size:11,family:'DM Sans'},padding:13,boxWidth:10}},
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed}`}}
+      }}});
+    } else {
+      document.getElementById('wrap-prioridad').innerHTML='<div style="text-align:center;padding:32px;color:#94a3b8;font-size:13px"><i class="fas fa-chart-pie" style="font-size:2.2rem;display:block;margin-bottom:10px;opacity:.22"></i>Sin datos aún</div>';
     }
+  }
 
-    actualizarReloj();
-    setInterval(actualizarReloj, 1000);
-
-
-    // ================= GRÁFICA PRIORIDAD =================
-    const ctx1 = document.getElementById('chartPrioridad');
-
-    if (ctx1) {
-        new Chart(ctx1, {
-            type: 'doughnut',
-            data: {
-                labels: {{ stats.por_prioridad | map(attribute='nombre') | list | tojson }},
-                datasets: [{
-                    data: {{ stats.por_prioridad | map(attribute='cantidad') | list | tojson }},
-                    backgroundColor: {{ stats.por_prioridad | map(attribute='color') | list | tojson }},
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true
-            }
-        });
+  const c2 = document.getElementById('chartTipo');
+  if(c2){
+    const labels2={{ stats.por_tipo|map(attribute='nombre')|list|tojson }};
+    const data2={{ stats.por_tipo|map(attribute='cantidad')|list|tojson }};
+    const pal=['#0d9488','#3b82f6','#8b5cf6','#f59e0b','#ef4444','#10b981','#f97316','#6366f1'];
+    if(data2.some(v=>v>0)){
+      new Chart(c2,{type:'bar',data:{
+        labels:labels2,
+        datasets:[{label:'Tickets',data:data2,
+          backgroundColor:labels2.map((_,i)=>pal[i%pal.length]+'cc'),
+          hoverBackgroundColor:labels2.map((_,i)=>pal[i%pal.length]),
+          borderRadius:9,borderSkipped:false}]
+      },options:{responsive:true,plugins:{legend:{display:false}},scales:{
+        y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},
+        x:{ticks:{font:{size:10},maxRotation:30},grid:{display:false}}
+      }}});
+    } else {
+      document.getElementById('wrap-tipo').innerHTML='<div style="text-align:center;padding:32px;color:#94a3b8;font-size:13px"><i class="fas fa-chart-bar" style="font-size:2.2rem;display:block;margin-bottom:10px;opacity:.22"></i>Sin datos de tipo aún</div>';
     }
+  }
 
+  const CE = {'Abierto':'#3b82f6','En Proceso':'#f59e0b','Resuelto':'#22c55e','Cerrado':'#94a3b8'};
 
-    // ================= GRÁFICA TIPO =================
-    const ctx2 = document.getElementById('chartTipo');
+  function renderTecnicos(data){
+    const lista=document.getElementById('tec-lista'); if(!lista)return;
+    let html='';
+    data.forEach(tec=>{
+      const badge=tec.activos>0
+        ?`<span style="font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700;background:#d1fae5;color:#065f46;border:1px solid #a7f3d0">${tec.activos} activo${tec.activos!==1?'s':''}</span>`
+        :`<span style="font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700;background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0">Libre</span>`;
+      html+=`<div class="tec-row"><div class="tec-av" style="background:${tec.color}">${tec.initials}</div><div class="tec-info"><div class="tec-name"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:108px">${tec.nombre}</span>${badge}</div><div class="tec-meta">${tec.total} ticket${tec.total!==1?'s':''} en total</div><div class="tec-prog"><div class="tec-fill" style="width:${tec.pct}%;background:${tec.color}"></div></div></div><div class="tec-cnt">${tec.activos}</div></div>`;
+    });
+    if(!data.length) html='<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px"><i class="fas fa-user-slash" style="opacity:.22;display:block;font-size:1.6rem;margin-bottom:8px"></i>Sin técnicos</div>';
+    lista.innerHTML=html;
+  }
 
-    if (ctx2) {
-        new Chart(ctx2, {
-            type: 'bar',
-            data: {
-                labels: {{ stats.por_tipo | map(attribute='nombre') | list | tojson }},
-                datasets: [{
-                    label: 'Tickets',
-                    data: {{ stats.por_tipo | map(attribute='cantidad') | list | tojson }},
-                    backgroundColor: '#00bcd4',
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
+  function renderMiniStats(d){
+    const g=document.getElementById('mini-stats-grid'); if(!g)return;
+    g.innerHTML=d.map(e=>`<div class="ms"><div class="ms-num" style="color:${CE[e.nombre]||'#64748b'}">${e.cantidad}</div><div class="ms-lbl">${e.nombre}</div></div>`).join('');
+  }
 
+  function refrescarTecnicos(){
+    fetch('/admin/api/tecnicos-carga').then(r=>r.json()).then(data=>{
+      const lista=document.getElementById('tec-lista');
+      if(lista){lista.style.opacity='.6';lista.style.transition='opacity .2s';}
+      renderTecnicos(data);
+      if(lista){lista.style.opacity='1';}
+    }).catch(()=>{});
+  }
+
+  function refrescarStats(){
+    fetch('/admin/api/estadisticas').then(r=>r.json()).then(data=>{
+      if(data.por_estado)renderMiniStats(data.por_estado);
+    }).catch(()=>{});
+  }
+
+  setInterval(()=>{ refrescarTecnicos(); refrescarStats(); }, 30000);
 });
 </script>
 {% endblock %}

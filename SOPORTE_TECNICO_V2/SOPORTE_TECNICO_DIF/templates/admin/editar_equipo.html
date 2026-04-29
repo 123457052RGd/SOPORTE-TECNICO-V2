@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Editar Equipo</h2>
+    <a href="{{ url_for('admin.equipos') }}" class="btn btn-secondary">← Volver</a>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST">
+
+    <!-- INFORMACIÓN GENERAL -->
+    <div class="card mb-4">
+      <div class="card-header"><strong>Información General</strong></div>
+      <div class="card-body row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label">Área</label>
+          <input list="areas-list" name="area" class="form-control"
+                 value="{{ equipo.area or '' }}">
+          <datalist id="areas-list">
+            {% for area in areas_lista %}
+              <option value="{{ area }}">
+            {% endfor %}
+          </datalist>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Tipo de Equipo</label>
+          <input list="tipos-list" name="tipo" class="form-control"
+                 value="{{ equipo.tipo or '' }}">
+          <datalist id="tipos-list">
+            {% for tipo in tipos_lista %}
+              <option value="{{ tipo }}">
+            {% endfor %}
+          </datalist>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Correo</label>
+          <input type="email" name="correo" class="form-control"
+                 value="{{ equipo.correo or '' }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Nombre Responsable <span class="text-danger">*</span></label>
+          <input type="text" name="nombre_responsable" class="form-control" required
+                 value="{{ equipo.nombre_responsable or '' }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Nombre Usuario</label>
+          <input type="text" name="nombre_usuario" class="form-control"
+                 value="{{ equipo.nombre_usuario or '' }}">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- INVENTARIO -->
+    <div class="card mb-4">
+      <div class="card-header"><strong>Inventario</strong></div>
+      <div class="card-body row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label">Número de Inventario</label>
+          <input type="text" name="num_inventario" class="form-control"
+                 value="{{ equipo.num_inventario or '' }}">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Número de Serie</label>
+          <input type="text" name="num_serie" class="form-control"
+                 value="{{ equipo.num_serie or '' }}">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">IP de PC</label>
+          <input type="text" name="ip_pc" class="form-control"
+                 value="{{ equipo.ip_pc or '' }}">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- HARDWARE -->
+    <div class="card mb-4">
+      <div class="card-header"><strong>Hardware</strong></div>
+      <div class="card-body row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label">Procesador</label>
+          <input type="text" name="procesador" class="form-control"
+                 value="{{ equipo.procesador or '' }}">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Frecuencia</label>
+          <input type="text" name="frecuencia" class="form-control"
+                 value="{{ equipo.frecuencia or '' }}">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">RAM</label>
+          <input type="text" name="ram" class="form-control"
+                 value="{{ equipo.ram or '' }}">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Tipo de Disco</label>
+          <select name="tipo_disco" class="form-select">
+            <option value="">-- Selecciona --</option>
+            <option value="HDD" {% if equipo.tipo_disco == 'HDD' %}selected{% endif %}>HDD</option>
+            <option value="SSD" {% if equipo.tipo_disco == 'SSD' %}selected{% endif %}>SSD</option>
+            <option value="NVMe" {% if equipo.tipo_disco == 'NVMe' %}selected{% endif %}>NVMe</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Capacidad de Disco</label>
+          <input type="text" name="capacidad_disco" class="form-control"
+                 value="{{ equipo.capacidad_disco or '' }}">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MONITOR -->
+    <div class="card mb-4">
+      <div class="card-header"><strong>Monitor</strong></div>
+      <div class="card-body row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label">Pulgadas</label>
+          <input type="text" name="monitor_pulgadas" class="form-control"
+                 value="{{ equipo.monitor_pulgadas or '' }}">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Serie Monitor</label>
+          <input type="text" name="serie_monitor" class="form-control"
+                 value="{{ equipo.serie_monitor or '' }}">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Inventario Monitor</label>
+          <input type="text" name="inv_monitor" class="form-control"
+                 value="{{ equipo.inv_monitor or '' }}">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TELÉFONO -->
+    <div class="card mb-4">
+      <div class="card-header"><strong>Teléfono</strong></div>
+      <div class="card-body row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label">Teléfono</label>
+          <input type="text" name="telefono" class="form-control"
+                 value="{{ equipo.telefono or '' }}">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Serie Teléfono</label>
+          <input type="text" name="serie_telefono" class="form-control"
+                 value="{{ equipo.serie_telefono or '' }}">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">IP Teléfono</label>
+          <input type="text" name="ip_telefono" class="form-control"
+                 value="{{ equipo.ip_telefono or '' }}">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BOTONES -->
+    <div class="d-flex gap-2 mb-5">
+      <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+      <a href="{{ url_for('admin.equipos') }}" class="btn btn-outline-secondary">Cancelar</a>
+
+      <!-- Botón eliminar (POST para seguridad) -->
+      <form method="POST"
+            action="{{ url_for('admin.eliminar_equipo', id_equipo=equipo.id_equipo) }}"
+            onsubmit="return confirm('¿Seguro que deseas eliminar este equipo?')"
+            style="margin-left:auto">
+        <button type="submit" class="btn btn-danger">Eliminar Equipo</button>
+      </form>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

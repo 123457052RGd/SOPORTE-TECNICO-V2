@@ -1,0 +1,7 @@
+{
+  "folders": [{ "path": "." }],
+  "settings": {
+    "python.terminal.useEnvFile": true,
+    "python.defaultInterpreterPath": "${workspaceFolder}/SOPORTE_TECNICO_V2/SOPORTE_TECNICO_DIF/.venv/Scripts/python.exe"
+  }
+}

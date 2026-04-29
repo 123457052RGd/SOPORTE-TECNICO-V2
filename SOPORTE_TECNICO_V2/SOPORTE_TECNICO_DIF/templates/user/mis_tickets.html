@@ -1,64 +1,403 @@
 {% extends "base.html" %}
-
 {% block title %}Mis Tickets{% endblock %}
 
-{% block content %}
-<div class="container">
-    <h1 class="mb-4">
-        <i class="fas fa-list"></i> Mis Tickets
-    </h1>
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap');
 
-    <div class="card">
-        <div class="card-body">
-            {% if tickets %}
-            <div class="table-responsive">
-                <table class="table table-hover" id="dataTable">
-                    <thead>
-                        <tr>
-                            <th>Folio</th>
-                            <th>Título</th>
-                            <th>Tipo</th>
-                            <th>Prioridad</th>
-                            <th>Estado</th>
-                            <th>Fecha</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for ticket in tickets %}
-                        <tr>
-                            <td><strong>{{ ticket.folio }}</strong></td>
-                            <td>{{ ticket.titulo }}</td>
-                            <td>{{ ticket.tipo_problema or 'N/A' }}</td>
-                            <td>
-                                <span class="badge" style="background-color: {{ ticket.color_prioridad }};">
-                                    {{ ticket.prioridad }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge" style="background-color: {{ ticket.color_estado }};">
-                                    {{ ticket.estado }}
-                                </span>
-                            </td>
-                            <td>{{ ticket.fecha_creacion[:16] }}</td>
-                            <td>
-                                <a href="{{ url_for('user.ver_ticket', id_ticket=ticket.id_ticket) }}" 
-                                   class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i> Ver
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> No tienes tickets registrados. 
-                <a href="{{ url_for('user.nuevo_ticket') }}">Crea tu primer ticket aquí</a>.
-            </div>
-            {% endif %}
-        </div>
+:root {
+  --teal:#0d9488; --teal-dk:#0f766e; --teal-lt:#e0fdf4; --teal-mid:#99f6e4;
+  --slate:#1e293b; --slate-md:#334155; --muted:#64748b; --border:#e2e8f0;
+  --surface:#fff; --page-bg:#f0f4f8;
+  --sh-card: 0 1px 4px rgba(0,0,0,.06), 0 4px 20px rgba(0,0,0,.04);
+  --sh-hover: 0 8px 32px rgba(0,0,0,.10);
+}
+body { background: var(--page-bg); font-family: 'DM Sans', system-ui, sans-serif; }
+
+/* fondo sutil */
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(13,148,136,.07) 0%, transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(59,130,246,.04) 0%, transparent 40%);
+}
+
+/* ── PAGE HEADER ── */
+.pg-hdr {
+  position:relative; z-index:1;
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:14px; margin-bottom:20px; padding-top:4px;
+  animation: fadeUp .35s ease both;
+}
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.pg-title {
+  font-size:22px; font-weight:800; color:var(--slate); margin:0;
+  display:flex; align-items:center; gap:10px; letter-spacing:-.4px;
+}
+.pg-title-icon {
+  width:38px; height:38px; border-radius:11px;
+  background:linear-gradient(135deg,var(--teal),var(--teal-dk));
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; font-size:15px;
+  box-shadow:0 4px 12px rgba(13,148,136,.3);
+}
+
+.btn-nuevo {
+  background:linear-gradient(135deg,var(--teal),var(--teal-dk));
+  color:#fff; border:none; border-radius:10px;
+  padding:10px 20px; font-size:13px; font-weight:700;
+  display:inline-flex; align-items:center; gap:8px;
+  text-decoration:none; cursor:pointer;
+  transition:all .18s; letter-spacing:.1px;
+  box-shadow:0 4px 14px rgba(13,148,136,.3);
+  position:relative; overflow:hidden;
+}
+.btn-nuevo::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.14) 0%,transparent 60%);
+}
+.btn-nuevo:hover { color:#fff; opacity:.92; transform:translateY(-2px); box-shadow:0 8px 22px rgba(13,148,136,.4); }
+.btn-nuevo:active { transform:scale(.97); }
+
+/* ── KPI ROW ── */
+.kpi-strip {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:12px; margin-bottom:20px; position:relative; z-index:1;
+}
+.kpi {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:16px 14px;
+  position:relative; overflow:hidden;
+  box-shadow:var(--sh-card); transition:all .2s; cursor:default;
+  animation: fadeUp .35s ease both;
+}
+.kpi:nth-child(1){animation-delay:.05s}
+.kpi:nth-child(2){animation-delay:.10s}
+.kpi:nth-child(3){animation-delay:.15s}
+.kpi:nth-child(4){animation-delay:.20s}
+.kpi::before {
+  content:''; position:absolute; top:0; left:0; right:0;
+  height:3px; border-radius:14px 14px 0 0;
+}
+.kpi:hover { transform:translateY(-3px); box-shadow:var(--sh-hover); }
+.kt::before{background:linear-gradient(90deg,var(--teal),var(--teal-mid))}
+.kb::before{background:linear-gradient(90deg,#3b82f6,#93c5fd)}
+.ka::before{background:linear-gradient(90deg,#f59e0b,#fcd34d)}
+.kg::before{background:linear-gradient(90deg,#22c55e,#86efac)}
+.ks::before{background:linear-gradient(90deg,#94a3b8,#cbd5e1)}
+
+.kpi-num { font-size:28px; font-weight:800; color:var(--slate); line-height:1; margin:0 0 3px; letter-spacing:-1px; }
+.kpi-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; font-weight:700; }
+
+/* ── CARD PRINCIPAL ── */
+.dc {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; overflow:hidden;
+  box-shadow:var(--sh-card); position:relative; z-index:1;
+  animation: fadeUp .4s .12s ease both;
+}
+
+/* BÚSQUEDA/FILTRO */
+.dc-toolbar {
+  padding:12px 18px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:10px;
+  background:linear-gradient(180deg,#f9fbff 0%,var(--surface) 100%);
+}
+.dc-title {
+  font-size:12px; font-weight:700; color:var(--slate);
+  display:flex; align-items:center; gap:8px;
+  text-transform:uppercase; letter-spacing:.5px;
+}
+.dc-title .ico {
+  width:26px; height:26px; background:var(--teal-lt); color:var(--teal);
+  border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:11px;
+}
+.cnt-badge {
+  background:var(--teal-lt); color:var(--teal-dk); border:1px solid var(--teal-mid);
+  padding:2px 9px; border-radius:20px; font-size:10px; font-weight:700;
+}
+
+.search-wrap {
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.search-box {
+  position:relative;
+}
+.search-box input {
+  padding:7px 10px 7px 30px; font-size:12px;
+  border:1.5px solid var(--border); border-radius:9px;
+  background:#f8fafc; color:var(--slate); outline:none;
+  width:200px; transition:border .15s,width .25s,background .15s;
+  font-family:'DM Sans',system-ui;
+}
+.search-box input:focus {
+  border-color:var(--teal); background:#fff;
+  box-shadow:0 0 0 3px rgba(13,148,136,.1); width:240px;
+}
+.search-box i {
+  position:absolute; left:9px; top:50%;
+  transform:translateY(-50%); color:#94a3b8; font-size:11px; pointer-events:none;
+}
+.filter-select {
+  padding:7px 10px; font-size:12px;
+  border:1.5px solid var(--border); border-radius:9px;
+  background:#f8fafc; color:var(--slate); outline:none;
+  cursor:pointer; transition:border .15s;
+  font-family:'DM Sans',system-ui;
+}
+.filter-select:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(13,148,136,.1); }
+
+/* ── TABLA ── */
+.dt { width:100%; border-collapse:collapse; font-size:12.5px; }
+.dt th {
+  padding:10px 13px; text-align:left;
+  font-size:10px; font-weight:700; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.5px;
+  border-bottom:2px solid var(--border); background:#f8fafc; white-space:nowrap;
+}
+.dt td {
+  padding:11px 13px; border-bottom:1px solid #f1f5f9;
+  color:var(--slate-md); vertical-align:middle;
+}
+.dt tr:last-child td { border-bottom:none; }
+.dt tbody tr {
+  transition:background .12s;
+  animation: rowIn .3s ease both;
+}
+@keyframes rowIn {
+  from { opacity:0; transform:translateX(-8px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+.dt tbody tr:nth-child(1){animation-delay:.05s}
+.dt tbody tr:nth-child(2){animation-delay:.09s}
+.dt tbody tr:nth-child(3){animation-delay:.13s}
+.dt tbody tr:nth-child(4){animation-delay:.17s}
+.dt tbody tr:nth-child(5){animation-delay:.21s}
+.dt tbody tr:nth-child(6){animation-delay:.25s}
+.dt tbody tr:nth-child(7){animation-delay:.29s}
+.dt tbody tr:nth-child(8){animation-delay:.33s}
+.dt tbody tr:hover td { background:linear-gradient(90deg,#f0fdf9,#f8fffd); }
+
+.folio {
+  font-weight:700; color:var(--teal-dk); font-size:11px;
+  font-family:'DM Mono',monospace; background:var(--teal-lt);
+  padding:4px 9px; border-radius:7px; display:inline-block;
+  border:1px solid var(--teal-mid); white-space:nowrap;
+}
+
+/* badges */
+.b { padding:4px 11px; border-radius:20px; font-size:11px; font-weight:700; display:inline-block; white-space:nowrap; }
+.b-prio { color:#fff; font-weight:700; }
+.b-abierto  { background:#dbeafe; color:#1d4ed8; }
+.b-proceso  { background:#fef3c7; color:#92400e; }
+.b-resuelto { background:#d1fae5; color:#065f46; }
+.b-cerrado  { background:#f1f5f9; color:#475569; }
+
+/* técnico */
+.tec-chip {
+  background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0;
+  padding:3px 9px; border-radius:7px; font-size:11px; font-weight:700;
+}
+.tec-none { color:#cbd5e1; font-size:15px; }
+
+/* botón ver */
+.btn-ver {
+  width:30px; height:30px; border-radius:9px;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:var(--teal-lt); color:var(--teal-dk);
+  border:1px solid var(--teal-mid); text-decoration:none; font-size:12px;
+  transition:all .15s;
+}
+.btn-ver:hover {
+  background:var(--teal); color:#fff; border-color:var(--teal);
+  transform:scale(1.1); box-shadow:0 3px 10px rgba(13,148,136,.3);
+}
+
+/* empty state */
+.empty-state {
+  text-align:center; padding:56px 20px;
+}
+.empty-ico {
+  width:72px; height:72px; border-radius:20px;
+  background:linear-gradient(135deg,var(--teal-lt),#f0fffe);
+  border:1px solid var(--teal-mid);
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 16px; font-size:2rem; color:var(--teal);
+}
+.empty-state h3 { font-size:15px; font-weight:700; color:var(--slate); margin:0 0 6px; }
+.empty-state p  { color:var(--muted); font-size:13px; margin:0 0 18px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div>
+
+  {# ── HEADER ── #}
+  <div class="pg-hdr">
+    <h1 class="pg-title">
+      <span class="pg-title-icon"><i class="fas fa-ticket-alt"></i></span>
+      Mis Tickets
+    </h1>
+    <a href="{{ url_for('user.nuevo_ticket') }}" class="btn-nuevo">
+      <i class="fas fa-plus"></i> Nuevo Ticket
+    </a>
+  </div>
+
+  {# ── KPI STRIP ── #}
+  {% set total     = tickets|length %}
+  {% set abiertos  = tickets|selectattr('estado','equalto','Abierto')|list|length %}
+  {% set en_proceso= tickets|selectattr('estado','equalto','En Proceso')|list|length %}
+  {% set resueltos = tickets|selectattr('estado','equalto','Resuelto')|list|length %}
+  {% set cerrados  = tickets|selectattr('estado','equalto','Cerrado')|list|length %}
+  <div class="kpi-strip">
+    <div class="kpi kt">
+      <div class="kpi-num">{{ total }}</div>
+      <div class="kpi-lbl">Total</div>
     </div>
+    <div class="kpi kb">
+      <div class="kpi-num" style="color:#3b82f6">{{ abiertos }}</div>
+      <div class="kpi-lbl">Abiertos</div>
+    </div>
+    <div class="kpi ka">
+      <div class="kpi-num" style="color:#f59e0b">{{ en_proceso }}</div>
+      <div class="kpi-lbl">En Proceso</div>
+    </div>
+    <div class="kpi kg">
+      <div class="kpi-num" style="color:#22c55e">{{ resueltos }}</div>
+      <div class="kpi-lbl">Resueltos</div>
+    </div>
+    <div class="kpi ks">
+      <div class="kpi-num" style="color:#94a3b8">{{ cerrados }}</div>
+      <div class="kpi-lbl">Cerrados</div>
+    </div>
+  </div>
+
+  {# ── TABLA ── #}
+  <div class="dc">
+    <div class="dc-toolbar">
+      <span class="dc-title">
+        <span class="ico"><i class="fas fa-list"></i></span>
+        Historial de Tickets
+        <span class="cnt-badge" id="cnt-visible">{{ tickets|length }}</span>
+      </span>
+      <div class="search-wrap">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="busqueda" placeholder="Buscar folio, título…" oninput="filtrarTabla()">
+        </div>
+        <select class="filter-select" id="filtro-estado" onchange="filtrarTabla()">
+          <option value="">Todos los estados</option>
+          <option value="Abierto">Abierto</option>
+          <option value="En Proceso">En Proceso</option>
+          <option value="Resuelto">Resuelto</option>
+          <option value="Cerrado">Cerrado</option>
+        </select>
+      </div>
+    </div>
+
+    {% if tickets %}
+    <div style="overflow-x:auto">
+      <table class="dt" id="tabla-tickets">
+        <thead>
+          <tr>
+            <th>Folio</th>
+            <th>Título</th>
+            <th>Tipo</th>
+            <th>Prioridad</th>
+            <th>Estado</th>
+            <th>Técnico</th>
+            <th>Fecha</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-tickets">
+          {% for ticket in tickets %}
+          <tr data-folio="{{ ticket.folio }}" data-titulo="{{ ticket.titulo }}" data-estado="{{ ticket.estado }}">
+            <td><span class="folio">{{ ticket.folio }}</span></td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">
+              {{ (ticket.titulo or '')[:50] }}{% if ticket.titulo and ticket.titulo|length > 50 %}…{% endif %}
+            </td>
+            <td style="font-size:11px;color:var(--muted)">{{ ticket.tipo_problema or '—' }}</td>
+            <td>
+              <span class="b b-prio" style="background:{{ ticket.color_prioridad }};box-shadow:0 2px 6px {{ ticket.color_prioridad }}44">
+                {{ ticket.prioridad }}
+              </span>
+            </td>
+            <td>
+              {% set ec={'Abierto':'b-abierto','En Proceso':'b-proceso','Resuelto':'b-resuelto','Cerrado':'b-cerrado'} %}
+              <span class="b {{ ec.get(ticket.estado,'b-cerrado') }}">{{ ticket.estado }}</span>
+            </td>
+            <td>
+              {% if ticket.nombre_tecnico %}
+                <span class="tec-chip">{{ ticket.nombre_tecnico }}</span>
+              {% else %}
+                <span class="tec-none">—</span>
+              {% endif %}
+            </td>
+            <td style="font-size:11px;white-space:nowrap">
+              <span style="font-weight:600;color:var(--slate-md)">{{ ticket.fecha_creacion[:10] if ticket.fecha_creacion else '—' }}</span>
+              {% if ticket.fecha_creacion and ticket.fecha_creacion|length > 10 %}
+              <br><span style="font-size:10px;color:var(--muted)">{{ ticket.fecha_creacion[11:16] }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('user.ver_ticket', id_ticket=ticket.id_ticket) }}" class="btn-ver" title="Ver ticket">
+                <i class="fas fa-eye"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {# Sin resultados de búsqueda #}
+      <div id="no-resultados" style="display:none;text-align:center;padding:32px;color:var(--muted);font-size:13px">
+        <i class="fas fa-search" style="font-size:1.8rem;opacity:.25;display:block;margin-bottom:10px"></i>
+        Sin tickets que coincidan con la búsqueda
+      </div>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-ico"><i class="fas fa-inbox"></i></div>
+      <h3>Sin tickets aún</h3>
+      <p>No tienes ningún ticket registrado. ¡Crea el primero!</p>
+      <a href="{{ url_for('user.nuevo_ticket') }}" class="btn-nuevo">
+        <i class="fas fa-plus"></i> Crear mi primer ticket
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filtrarTabla() {
+  const q      = document.getElementById('busqueda').value.toLowerCase().trim();
+  const estado = document.getElementById('filtro-estado').value;
+  const filas  = document.querySelectorAll('#tbody-tickets tr');
+  let visibles = 0;
+
+  filas.forEach(tr => {
+    const folio  = (tr.dataset.folio  || '').toLowerCase();
+    const titulo = (tr.dataset.titulo || '').toLowerCase();
+    const est    = (tr.dataset.estado || '');
+    const ok = (q === '' || folio.includes(q) || titulo.includes(q))
+            && (estado === '' || est === estado);
+    tr.style.display = ok ? '' : 'none';
+    if (ok) visibles++;
+  });
+
+  document.getElementById('cnt-visible').textContent = visibles;
+  document.getElementById('no-resultados').style.display = visibles === 0 ? 'block' : 'none';
+}
+</script>
 {% endblock %}

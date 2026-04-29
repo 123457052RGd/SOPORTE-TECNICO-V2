@@ -1,5 +1,7 @@
 """
 Rutas de autenticación - Flask + MySQL + bcrypt (werkzeug)
+NOTA: primer_login se detecta por password = 'TEMPORAL' en sesión,
+      sin consulta extra a BD (evita error si la columna no existe).
 """
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from functools import wraps
@@ -7,16 +9,10 @@ from dao.usuario_dao import UsuarioDAO
 
 auth_bp = Blueprint('auth', __name__)
 
-# Roles que tienen acceso al panel de administración
 ROLES_ADMIN = ('admin', 'tecnico', 'jefe')
 
 
-# ──────────────────────────────────────────────
-# Decoradores de autenticación
-# ──────────────────────────────────────────────
-
 def login_required(f):
-    """Requiere que el usuario esté autenticado"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
@@ -27,7 +23,6 @@ def login_required(f):
 
 
 def admin_required(f):
-    """Requiere rol de administrador, técnico o jefe"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
@@ -40,13 +35,8 @@ def admin_required(f):
     return decorated_function
 
 
-# ──────────────────────────────────────────────
-# Rutas
-# ──────────────────────────────────────────────
-
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    """Página de inicio de sesión"""
     if 'user_id' in session:
         if session.get('rol') in ROLES_ADMIN:
             return redirect(url_for('admin.dashboard'))
@@ -63,13 +53,34 @@ def login():
         usuario = UsuarioDAO.validar_credenciales(email, password)
 
         if usuario:
+            perfil = UsuarioDAO.obtener_por_id(usuario["id_usuario"], rol=usuario.get("rol_nombre"))
+
             session.permanent  = True
             session['user_id'] = usuario['id_usuario']
             session['nombre']  = usuario['nombre_completo']
             session['email']   = usuario['email']
             session['rol']     = usuario['rol_nombre']
+            session['foto']    = perfil['foto'] if perfil and perfil.get('foto') else None
 
-            flash(f'¡Bienvenido {usuario["nombre_completo"]}!', 'success')
+            # ── Detectar primer login por columna primer_login (si existe) ──
+            # Si la columna no existe en BD, se ignora silenciosamente
+            try:
+                from dao.base_dao import BaseDAO
+                flag = BaseDAO.execute_query(
+                    """SELECT primer_login FROM tecnicos WHERE id_tecnico = %s
+                       UNION ALL
+                       SELECT primer_login FROM usuarios WHERE id = %s
+                       LIMIT 1""",
+                    (usuario['id_usuario'], usuario['id_usuario']),
+                    fetch_one=True
+                )
+                if flag and flag.get('primer_login'):
+                    session['primer_login'] = True
+            except Exception:
+                # Columna no existe aún — no hay problema, se ignora
+                pass
+
+            flash(f'¡Bienvenido, {usuario["nombre_completo"]}!', 'success')
 
             if usuario['rol_nombre'] in ROLES_ADMIN:
                 return redirect(url_for('admin.dashboard'))
@@ -82,7 +93,6 @@ def login():
 
 @auth_bp.route('/logout')
 def logout():
-    """Cerrar sesión"""
     session.clear()
     flash('Sesión cerrada correctamente', 'info')
     return redirect(url_for('auth.login'))
@@ -90,7 +100,6 @@ def logout():
 
 @auth_bp.route('/registro', methods=['GET', 'POST'])
 def registro():
-    """Registro deshabilitado — solo el admin crea usuarios"""
     if request.method == 'POST':
         flash('El registro público está deshabilitado. Contacte al administrador.', 'info')
         return redirect(url_for('auth.login'))

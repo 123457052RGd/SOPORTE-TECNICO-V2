@@ -1,58 +1,24 @@
-"""
-Módulo de notificaciones del sistema
-"""
+from dao.base_dao import BaseDAO
 from datetime import datetime
 
-class NotificacionesManager:
-    """Gestor de notificaciones internas del sistema"""
-    
+class NotificacionDAO:
+
     @staticmethod
-    def generar_notificacion_nuevo_ticket(ticket, usuario):
-        """Genera notificación cuando se crea un nuevo ticket"""
-        return {
-            'tipo': 'nuevo_ticket',
-            'titulo': f'Nuevo ticket #{ticket.folio}',
-            'mensaje': f'{usuario["nombre_completo"]} ha creado un nuevo ticket: {ticket.titulo}',
-            'prioridad': ticket.id_prioridad,
-            'fecha': datetime.now(),
-            'icono': 'fa-ticket-alt',
-            'color': 'info'
-        }
-    
-    @staticmethod
-    def generar_notificacion_asignacion(ticket, tecnico):
-        """Genera notificación cuando se asigna un ticket"""
-        return {
-            'tipo': 'asignacion',
-            'titulo': f'Ticket asignado #{ticket["folio"]}',
-            'mensaje': f'Se te ha asignado el ticket: {ticket["titulo"]}',
-            'destinatario': tecnico['id_usuario'],
-            'fecha': datetime.now(),
-            'icono': 'fa-user-plus',
-            'color': 'warning'
-        }
-    
-    @staticmethod
-    def generar_notificacion_resolucion(ticket, usuario):
-        """Genera notificación cuando se resuelve un ticket"""
-        return {
-            'tipo': 'resolucion',
-            'titulo': f'Ticket resuelto #{ticket["folio"]}',
-            'mensaje': f'Tu ticket ha sido resuelto por {ticket.get("nombre_tecnico", "el equipo técnico")}',
-            'destinatario': usuario['id_usuario'],
-            'fecha': datetime.now(),
-            'icono': 'fa-check-circle',
-            'color': 'success'
-        }
-    
-    @staticmethod
-    def generar_notificacion_actualizacion(ticket):
-        """Genera notificación cuando se actualiza un ticket"""
-        return {
-            'tipo': 'actualizacion',
-            'titulo': f'Actualización ticket #{ticket["folio"]}',
-            'mensaje': f'Se ha actualizado el estado a: {ticket["estado"]}',
-            'fecha': datetime.now(),
-            'icono': 'fa-sync-alt',
-            'color': 'info'
-        }
+    def crear(id_usuario, id_destinatario, tipo_destinatario, id_ticket, mensaje, tipo='info', titulo='Notificación', url_accion=None):
+        query = """
+        INSERT INTO notificaciones
+        (id_usuario, id_destinatario, tipo_destinatario, id_ticket, mensaje, url_accion, tipo, titulo, leida, fecha_creacion)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 0, %s)
+        """
+        
+        return BaseDAO.execute_query(query, (
+            id_usuario,
+            id_destinatario,
+            tipo_destinatario,
+            id_ticket,
+            mensaje,
+            url_accion,
+            tipo,
+            titulo,
+            datetime.now()
+        ))

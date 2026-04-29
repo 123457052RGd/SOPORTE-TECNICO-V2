@@ -1,240 +1,325 @@
 {% extends "base.html" %}
-
-{% block title %}Gestionar Ticket {{ ticket.folio }}{% endblock %}
-
-{% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-ticket-alt"></i> Ticket {{ ticket.folio }}</h1>
-        <a href="{{ url_for('admin.tickets') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Volver a Lista
-        </a>
-    </div>
-
-    <div class="row">
-        <div class="col-md-8">
-            <!-- Información del ticket -->
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5><i class="fas fa-info-circle"></i> Información del Ticket</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <strong>Estado:</strong><br>
-                            <span class="badge" style="background-color: {{ ticket.color_estado }}; font-size: 1.2em;">
-                                {{ ticket.estado }}
-                            </span>
-                        </div>
-                        <div class="col-md-4">
-                            <strong>Prioridad:</strong><br>
-                            <span class="badge" style="background-color: {{ ticket.color_prioridad }}; font-size: 1.2em;">
-                                {{ ticket.prioridad }}
-                            </span>
-                        </div>
-                        <div class="col-md-4">
-                            <strong>Fecha Creación:</strong><br>
-                            {{ ticket.fecha_creacion }}
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <strong>Usuario:</strong><br>
-                            <i class="fas fa-user"></i> {{ ticket.nombre_usuario }}<br>
-                            <i class="fas fa-envelope"></i> {{ ticket.email_usuario }}<br>
-                            <i class="fas fa-building"></i> {{ ticket.area_usuario }}
-                        </div>
-                        <div class="col-md-6">
-                            {% if ticket.nombre_equipo %}
-                            <strong>Equipo:</strong><br>
-                            <i class="fas fa-desktop"></i> {{ ticket.nombre_equipo }}<br>
-                            <small class="text-muted">{{ ticket.tipo_equipo }} - {{ ticket.ubicacion_equipo }}</small>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="mb-3">
-                        <strong>Tipo de Problema:</strong>
-                        <p>{{ ticket.tipo_problema or 'No especificado' }}</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong>Título:</strong>
-                        <p class="lead">{{ ticket.titulo }}</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong>Descripción:</strong>
-                        <p class="text-justify">{{ ticket.descripcion }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Formulario de gestión -->
-            {% if ticket.estado != 'Cerrado' %}
-            <div class="card mb-4">
-                <div class="card-header bg-success text-white">
-                    <h5><i class="fas fa-cogs"></i> Gestión del Ticket</h5>
-                </div>
-                <div class="card-body">
-                    <!-- Asignar técnico -->
-                    {% if not ticket.id_tecnico_asignado %}
-                    <form method="POST" action="{{ url_for('admin.asignar_ticket', id_ticket=ticket.id_ticket) }}" class="mb-4">
-                        <h6>Asignar Técnico</h6>
-                        <div class="row">
-                            <div class="col-md-9">
-                                <select name="id_tecnico" class="form-select" required>
-                                    <option value="">Seleccione un técnico</option>
-                                    {% for tecnico in tecnicos %}
-                                    <option value="{{ tecnico.id_usuario }}">{{ tecnico.nombre_completo }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="fas fa-user-plus"></i> Asignar
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                    {% else %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-user-cog"></i> Asignado a: <strong>{{ ticket.nombre_tecnico }}</strong>
-                    </div>
-                    {% endif %}
-
-                    <hr>
-
-                    <!-- Cambiar estado -->
-                    <form method="POST" action="{{ url_for('admin.cambiar_estado', id_ticket=ticket.id_ticket) }}" class="mb-4">
-                        <h6>Cambiar Estado</h6>
-                        <div class="row">
-                            <div class="col-md-9">
-                                <select name="id_estado" class="form-select" required>
-                                    {% for estado in estados %}
-                                    <option value="{{ estado.id_estado }}" {% if estado.nombre == ticket.estado %}selected{% endif %}>
-                                        {{ estado.nombre }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <button type="submit" class="btn btn-warning w-100">
-                                    <i class="fas fa-exchange-alt"></i> Cambiar
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-
-                    <hr>
-
-                    <!-- Agregar solución -->
-                    {% if ticket.estado != 'Resuelto' %}
-                    <form method="POST" action="{{ url_for('admin.resolver_ticket', id_ticket=ticket.id_ticket) }}">
-                        <h6>Agregar Solución</h6>
-                        <div class="mb-3">
-                            <label class="form-label">Solución Aplicada *</label>
-                            <textarea name="solucion" class="form-control" rows="4" required 
-                                      placeholder="Describa la solución que se aplicó al problema..."></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Observaciones Técnicas</label>
-                            <textarea name="observaciones" class="form-control" rows="3" 
-                                      placeholder="Observaciones adicionales (opcional)"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-check-circle"></i> Marcar como Resuelto
-                        </button>
-                    </form>
-                    {% endif %}
-
-                    <!-- Cerrar ticket -->
-                    {% if ticket.estado == 'Resuelto' %}
-                    <hr>
-                    <form method="POST" action="{{ url_for('admin.cerrar_ticket', id_ticket=ticket.id_ticket) }}">
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('¿Está seguro de cerrar este ticket?')">
-                            <i class="fas fa-times-circle"></i> Cerrar Ticket Definitivamente
-                        </button>
-                    </form>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Solución (si existe) -->
-            {% if ticket.solucion %}
-            <div class="card mb-4">
-                <div class="card-header bg-success text-white">
-                    <h5><i class="fas fa-check-circle"></i> Solución Aplicada</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Solución:</strong></p>
-                    <p>{{ ticket.solucion }}</p>
-                    
-                    {% if ticket.observaciones_tecnico %}
-                    <hr>
-                    <p><strong>Observaciones Técnicas:</strong></p>
-                    <p>{{ ticket.observaciones_tecnico }}</p>
-                    {% endif %}
-                    
-                    <p class="text-muted"><small>Resuelto el: {{ ticket.fecha_resolucion }}</small></p>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="col-md-4">
-            <!-- Historial -->
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-history"></i> Historial de Cambios</h5>
-                </div>
-                <div class="card-body">
-                    {% if historial %}
-                    <div class="timeline">
-                        {% for evento in historial %}
-                        <div class="timeline-item mb-3">
-                            <div class="timeline-marker bg-primary"></div>
-                            <div class="timeline-content">
-                                <strong>{{ evento.accion }}</strong>
-                                <p class="mb-0">{{ evento.descripcion }}</p>
-                                <small class="text-muted">
-                                    {{ evento.fecha }}<br>
-                                    Por: {{ evento.nombre_completo }}
-                                </small>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <p class="text-muted">Sin historial</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+{% block title %}Ticket {{ ticket.folio }}{% endblock %}
 
 {% block extra_css %}
 <style>
-.timeline-item {
-    position: relative;
-    padding-left: 30px;
-    border-left: 2px solid #dee2e6;
+:root{--teal:#0d9488;--teal-dk:#0f766e;--teal-lt:#e0fdf4;--slate:#1e293b;--muted:#64748b;--border:#e2e8f0;--surface:#fff;--page-bg:#f1f5f9}
+body{background:var(--page-bg)!important}
+.pg-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;padding-top:4px}
+.pg-title{font-size:19px;font-weight:700;color:var(--slate);margin:0;display:flex;align-items:center;gap:8px}
+.pg-title i{color:var(--teal)}
+.pg-folio{font-size:12px;color:var(--muted);font-family:monospace;background:#f1f5f9;padding:3px 10px;border-radius:8px;border:1px solid var(--border)}
+.dc{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.dc-hdr{padding:12px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.dc-hdr-title{font-size:13px;font-weight:600;color:var(--slate);display:flex;align-items:center;gap:6px}
+.dc-hdr-title i{color:var(--teal)}
+.dc-body{padding:16px}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+.info-field label{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.info-field .val{font-size:13px;color:var(--slate);font-weight:500}
+.b{padding:3px 9px;border-radius:10px;font-size:12px;font-weight:600;display:inline-block}
+.b-abierto{background:#dbeafe;color:#1d4ed8}.b-proceso{background:#fef3c7;color:#92400e}.b-resuelto{background:#d1fae5;color:#065f46}.b-cerrado{background:#f1f5f9;color:#475569}
+.b-prio{color:#fff;padding:3px 9px;border-radius:10px;font-size:12px;font-weight:600}
+.tl-item{position:relative;padding-left:1.5rem;border-left:2px solid var(--border);margin-bottom:12px;padding-bottom:4px}
+.tl-item:last-child{border-left:2px solid transparent}
+.tl-dot{position:absolute;left:-7px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--teal);border:2px solid var(--surface)}
+.form-section{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
+.form-section-title{font-size:12px;font-weight:600;color:var(--slate2,#334155);margin:0 0 10px;display:flex;align-items:center;gap:6px}
+.form-section-title i{color:var(--teal)}
+.btn-pdf{background:#1e293b;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;text-decoration:none;cursor:pointer;transition:background .15s}
+.btn-pdf:hover{background:#334155;color:#fff}
+.dif-foot{text-align:center;padding:14px 0 0;border-top:1px solid var(--border);font-size:12px;color:var(--muted);margin-top:8px}
+@media print{
+  .navbar,.footer,.btn,.no-print,.dc-hdr-actions,.form-section,.pg-hdr .btn-group{display:none!important}
+  body{background:#fff!important;font-size:12px}
+  .print-only{display:block!important}
+  .dc{box-shadow:none!important;border:1px solid #dee2e6!important;border-radius:4px!important}
+  .main-grid{grid-template-columns:1fr!important}
+  #print-header{display:flex!important}
 }
-.timeline-marker {
-    position: absolute;
-    left: -6px;
-    top: 5px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
+.print-only{display:none}
+#print-header{display:none;align-items:center;justify-content:space-between;border-bottom:2px solid #0d9488;padding-bottom:12px;margin-bottom:16px}
+#print-header .ph-logo{font-size:18px;font-weight:700;color:#0d9488}
+#print-header .ph-sub{font-size:11px;color:#64748b}
+#print-header .ph-folio{font-size:13px;font-weight:600;color:#1e293b;font-family:monospace}
 </style>
+{% endblock %}
+
+{# Macro para formatear fechas — acepta datetime O string #}
+{% macro fmt_fecha(f, solo_fecha=false) %}
+  {% if f %}
+    {% if f is string %}
+      {{ f[:10] if solo_fecha else f[:16] }}
+    {% else %}
+      {{ f.strftime('%d/%m/%Y') if solo_fecha else f.strftime('%d/%m/%Y %H:%M') }}
+    {% endif %}
+  {% else %}—{% endif %}
+{% endmacro %}
+
+{% block content %}
+<div id="print-header">
+  <div>
+    <div class="ph-logo">ITIL Helpdesk — DIF</div>
+    <div class="ph-sub">Sistema de Soporte Técnico © 2026</div>
+  </div>
+  <div class="ph-folio">Comprobante de Ticket: {{ ticket.folio }}</div>
+</div>
+
+<div class="pg-hdr no-print">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <h1 class="pg-title"><i class="fas fa-ticket-alt"></i>Ticket</h1>
+    <span class="pg-folio">{{ ticket.folio }}</span>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap" class="btn-group">
+    <button onclick="window.print()" class="btn-pdf">
+      <i class="fas fa-print"></i> Imprimir / PDF
+    </button>
+    <a href="{{ url_for('admin.tickets') }}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Volver
+    </a>
+  </div>
+</div>
+
+<div class="main-grid" style="display:grid;grid-template-columns:1fr 340px;gap:14px">
+
+  {# ── COLUMNA IZQUIERDA ── #}
+  <div>
+
+    <div class="dc">
+      <div class="dc-hdr">
+        <span class="dc-hdr-title"><i class="fas fa-info-circle"></i>Información del Ticket</span>
+      </div>
+      <div class="dc-body">
+        <div class="info-grid" style="margin-bottom:14px">
+          <div class="info-field">
+            <label>Estado</label>
+            {% set ec={'Abierto':'b-abierto','En Proceso':'b-proceso','Resuelto':'b-resuelto','Cerrado':'b-cerrado'} %}
+            <span class="b {{ ec.get(ticket.estado,'b-cerrado') }}">{{ ticket.estado }}</span>
+          </div>
+          <div class="info-field">
+            <label>Prioridad</label>
+            <span class="b b-prio" style="background:{{ ticket.color_prioridad }}">{{ ticket.prioridad }}</span>
+          </div>
+          <div class="info-field">
+            <label>Fecha de Creación</label>
+            <div class="val">{{ fmt_fecha(ticket.fecha_creacion) }}</div>
+          </div>
+          {% if ticket.fecha_asignacion %}
+          <div class="info-field">
+            <label>Fecha Asignación</label>
+            <div class="val">{{ fmt_fecha(ticket.fecha_asignacion) }}</div>
+          </div>
+          {% endif %}
+          {% if ticket.fecha_resolucion %}
+          <div class="info-field">
+            <label>Fecha Resolución</label>
+            <div class="val">{{ fmt_fecha(ticket.fecha_resolucion) }}</div>
+          </div>
+          {% endif %}
+        </div>
+
+        <hr style="border-color:var(--border);margin:12px 0">
+
+        <div class="info-grid" style="margin-bottom:14px">
+          <div class="info-field">
+            <label><i class="fas fa-user me-1"></i>Usuario</label>
+            <div class="val">{{ ticket.nombre_usuario }}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">
+              <i class="fas fa-envelope me-1"></i>{{ ticket.email_usuario }}<br>
+              <i class="fas fa-building me-1"></i>{{ ticket.area_usuario }}
+            </div>
+          </div>
+          {% if ticket.nombre_tecnico %}
+          <div class="info-field">
+            <label><i class="fas fa-user-cog me-1"></i>Técnico Asignado</label>
+            <div class="val">{{ ticket.nombre_tecnico }}</div>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if ticket.id_equipo %}
+        <hr style="border-color:var(--border);margin:12px 0">
+        <div class="info-field" style="margin-bottom:12px">
+          <label><i class="fas fa-desktop me-1"></i>Equipo Afectado</label>
+          <div class="val">{{ ticket.num_inventario or ticket.id_equipo }}</div>
+        </div>
+        {% endif %}
+
+        <hr style="border-color:var(--border);margin:12px 0">
+
+        <div class="info-field" style="margin-bottom:10px">
+          <label>Tipo de Problema</label>
+          <div class="val">{{ ticket.tipo_problema or 'No especificado' }}</div>
+        </div>
+        <div class="info-field" style="margin-bottom:10px">
+          <label>Título</label>
+          <div class="val" style="font-size:15px">{{ ticket.titulo }}</div>
+        </div>
+        <div class="info-field">
+          <label>Descripción</label>
+          <div class="val" style="line-height:1.6;font-weight:400;white-space:pre-wrap">{{ ticket.descripcion }}</div>
+        </div>
+      </div>
+    </div>
+
+    {% if ticket.solucion %}
+    <div class="dc">
+      <div class="dc-hdr">
+        <span class="dc-hdr-title" style="color:#065f46"><i class="fas fa-check-circle" style="color:#22c55e"></i>Solución Aplicada</span>
+      </div>
+      <div class="dc-body">
+        <div class="info-field" style="margin-bottom:10px">
+          <label>Solución</label>
+          <div class="val" style="font-weight:400;white-space:pre-wrap">{{ ticket.solucion }}</div>
+        </div>
+        {% if ticket.observaciones_tecnico %}
+        <div class="info-field" style="margin-bottom:10px">
+          <label>Observaciones Técnicas</label>
+          <div class="val" style="font-weight:400">{{ ticket.observaciones_tecnico }}</div>
+        </div>
+        {% endif %}
+        <div style="font-size:11px;color:var(--muted)">Resuelto el: {{ fmt_fecha(ticket.fecha_resolucion) }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if ticket.estado != 'Cerrado' %}
+    <div class="dc no-print">
+      <div class="dc-hdr">
+        <span class="dc-hdr-title"><i class="fas fa-cogs"></i>Gestión del Ticket</span>
+      </div>
+      <div class="dc-body">
+
+        {% if not ticket.id_tecnico %}
+        <div class="form-section">
+          <div class="form-section-title"><i class="fas fa-user-plus"></i>Asignar Técnico</div>
+          <form method="POST" action="{{ url_for('admin.asignar_ticket', id_ticket=ticket.id_ticket) }}" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end">
+            <div>
+              <select name="id_tecnico" class="form-select" required>
+                <option value="">Seleccione un técnico</option>
+                {% for tecnico in tecnicos %}
+                <option value="{{ tecnico.id_usuario }}">{{ tecnico.nombre_completo }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-user-plus"></i> Asignar
+            </button>
+          </form>
+        </div>
+        {% else %}
+        <div class="alert alert-info" style="margin-bottom:12px">
+          <i class="fas fa-user-cog me-2"></i>Asignado a: <strong>{{ ticket.nombre_tecnico }}</strong>
+        </div>
+        {% endif %}
+
+        <div class="form-section">
+          <div class="form-section-title"><i class="fas fa-exchange-alt"></i>Cambiar Estado</div>
+          <form method="POST" action="{{ url_for('admin.cambiar_estado', id_ticket=ticket.id_ticket) }}" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end">
+            <div>
+              <select name="id_estado" class="form-select" required>
+                {% for estado in estados %}
+                <option value="{{ estado }}" {% if estado == ticket.estado %}selected{% endif %}>{{ estado }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="btn btn-warning">
+              <i class="fas fa-exchange-alt"></i> Cambiar
+            </button>
+          </form>
+        </div>
+
+        {% if ticket.estado != 'Resuelto' %}
+        <div class="form-section">
+          <div class="form-section-title"><i class="fas fa-check-circle"></i>Agregar Solución</div>
+          <form method="POST" action="{{ url_for('admin.resolver_ticket', id_ticket=ticket.id_ticket) }}">
+            <div class="mb-3">
+              <label class="form-label">Solución Aplicada *</label>
+              <textarea name="solucion" class="form-control" rows="3" required
+                        placeholder="Describa la solución que se aplicó al problema..."></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Observaciones Técnicas</label>
+              <textarea name="observaciones" class="form-control" rows="2"
+                        placeholder="Observaciones adicionales (opcional)"></textarea>
+            </div>
+            <button type="submit" class="btn btn-success">
+              <i class="fas fa-check-circle"></i> Marcar como Resuelto
+            </button>
+          </form>
+        </div>
+        {% endif %}
+
+        {% if ticket.estado == 'Resuelto' %}
+        <div class="form-section" style="background:#fff5f5;border-color:#fecaca">
+          <div class="form-section-title" style="color:#991b1b"><i class="fas fa-times-circle" style="color:#ef4444"></i>Cerrar Ticket</div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Al cerrar el ticket se generará el comprobante final.</p>
+          <form method="POST" action="{{ url_for('admin.cerrar_ticket', id_ticket=ticket.id_ticket) }}" style="display:inline">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('¿Cerrar este ticket definitivamente?')">
+              <i class="fas fa-times-circle"></i> Cerrar Ticket
+            </button>
+          </form>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+    {% endif %}
+
+  </div>{# /col izq #}
+
+  {# ── COLUMNA DERECHA ── #}
+  <div>
+
+    <div class="dc" style="margin-bottom:14px">
+      <div class="dc-hdr">
+        <span class="dc-hdr-title"><i class="fas fa-id-card"></i>Resumen</span>
+      </div>
+      <div class="dc-body" style="padding:12px">
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <tr><td style="color:var(--muted);padding:4px 0;width:40%">Folio</td><td style="font-weight:600;font-family:monospace;color:var(--teal)">{{ ticket.folio }}</td></tr>
+          <tr><td style="color:var(--muted);padding:4px 0">Creado</td><td>{{ fmt_fecha(ticket.fecha_creacion, solo_fecha=true) }}</td></tr>
+          <tr><td style="color:var(--muted);padding:4px 0">Usuario</td><td>{{ ticket.nombre_usuario }}</td></tr>
+          <tr><td style="color:var(--muted);padding:4px 0">Área</td><td>{{ ticket.area_usuario }}</td></tr>
+          {% if ticket.nombre_tecnico %}<tr><td style="color:var(--muted);padding:4px 0">Técnico</td><td>{{ ticket.nombre_tecnico }}</td></tr>{% endif %}
+        </table>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
+          <button onclick="window.print()" class="btn-pdf" style="width:100%;justify-content:center">
+            <i class="fas fa-file-pdf"></i> Descargar Comprobante PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dc">
+      <div class="dc-hdr">
+        <span class="dc-hdr-title"><i class="fas fa-history"></i>Historial</span>
+        <span style="font-size:10px;color:var(--muted)">{{ historial|length }} evento{{ 's' if historial|length!=1 else '' }}</span>
+      </div>
+      <div class="dc-body" style="max-height:400px;overflow-y:auto;padding:14px">
+        {% if historial %}
+        {% for evento in historial %}
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--slate)">{{ evento.accion }}</div>
+            {% if evento.descripcion %}<div style="font-size:11px;color:var(--muted);margin-top:1px">{{ evento.descripcion }}</div>{% endif %}
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">
+              {{ evento.fecha }}<br>Por: <strong>{{ evento.nombre_completo }}</strong>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">
+          <i class="fas fa-history me-1"></i>Sin historial
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="dif-foot no-print">ITIL Helpdesk — Sistema DIF de Soporte Técnico © 2026</div>
 {% endblock %}

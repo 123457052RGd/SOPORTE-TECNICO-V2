@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Nuevo Usuario{% endblock %}
+
+{% block extra_css %}
+<style>
+:root{--teal:#0d9488;--teal-dk:#0f766e;--teal-lt:#e0fdf4;--slate:#1e293b;--muted:#64748b;--border:#e2e8f0;--surface:#fff;--page-bg:#f1f5f9}
+body{background:var(--page-bg)!important}
+.nu-wrap{max-width:620px;margin:0 auto;padding:1.5rem 1rem 3rem}
+.nu-title{font-size:20px;font-weight:700;color:var(--slate);display:flex;align-items:center;gap:8px;margin-bottom:1.5rem}
+.nu-title i{color:var(--teal)}
+.nu-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.nu-card-hdr{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--slate);background:#f8fafc}
+.nu-card-hdr i{color:var(--teal)}
+.nu-card-body{padding:20px 18px}
+.nu-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:576px){.nu-row{grid-template-columns:1fr}}
+.nu-group{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.nu-group:last-child{margin-bottom:0}
+.nu-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.nu-label .req{color:#ef4444}
+.nu-input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--slate);background:#fff;outline:none;transition:border .15s}
+.nu-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.1)}
+.nu-select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--slate);background:#fff;outline:none;cursor:pointer;transition:border .15s}
+.nu-select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.1)}
+.pw-wrap{display:flex;gap:4px}
+.pw-wrap .nu-input{flex:1}
+.pw-toggle{background:#f1f5f9;border:1px solid var(--border);border-radius:8px;padding:0 12px;cursor:pointer;color:var(--muted);font-size:13px;transition:background .15s}
+.pw-toggle:hover{background:var(--teal-lt);color:var(--teal)}
+.pw-msg{font-size:11px;margin-top:3px}
+.btn-save{background:var(--teal);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background .15s}
+.btn-save:hover{background:var(--teal-dk)}
+.btn-cancel{background:#f1f5f9;color:var(--slate);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:background .15s}
+.btn-cancel:hover{background:var(--border);color:var(--slate)}
+.rol-info{font-size:11px;color:var(--muted);margin-top:3px}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nu-wrap">
+
+  <div class="nu-title">
+    <i class="fas fa-user-plus"></i> Nuevo Usuario
+  </div>
+
+  <form method="POST" id="form-nuevo-usuario"
+        action="{{ url_for('admin.nuevo_usuario') }}">
+
+    {# Datos personales #}
+    <div class="nu-card">
+      <div class="nu-card-hdr"><i class="fas fa-user"></i>Datos personales</div>
+      <div class="nu-card-body">
+
+        <div class="nu-row">
+          <div class="nu-group">
+            <label class="nu-label">Nombre completo <span class="req">*</span></label>
+            <input type="text" name="nombre" class="nu-input" required
+                   placeholder="">
+          </div>
+          <div class="nu-group">
+            <label class="nu-label">Correo electronico <span class="req">*</span></label>
+            <input type="email" name="email" class="nu-input" required
+                   placeholder="usuario@dominio.com">
+          </div>
+        </div>
+
+        <div class="nu-row">
+          <div class="nu-group">
+            <label class="nu-label">Departamento / Area</label>
+            <input type="text" name="departamento" class="nu-input"
+                   placeholder="Ej: Programas Sociales">
+          </div>
+          <div class="nu-group">
+            <label class="nu-label">Telefono</label>
+            <input type="text" name="telefono" class="nu-input"
+                   placeholder="Ej: 442 123 4567">
+          </div>
+        </div>
+
+        <div class="nu-group">
+          <label class="nu-label">Rol <span class="req">*</span></label>
+          <select name="rol" class="nu-select" required id="selectRol">
+            <option value="usuario">Usuario — Solo crea y ve sus tickets</option>
+            <option value="tecnico">Tecnico — Atiende y resuelve tickets</option>
+            <option value="jefe">Jefe — Acceso completo al panel admin</option>
+            <option value="admin">Admin — Control total del sistema</option>
+          </select>
+          <div class="rol-info" id="rol-desc">El usuario podra crear y consultar sus propios tickets.</div>
+        </div>
+
+      </div>
+    </div>
+
+    {# Contrasena #}
+    <div class="nu-card">
+      <div class="nu-card-hdr"><i class="fas fa-lock"></i>Contrasena de acceso</div>
+      <div class="nu-card-body">
+        <div class="nu-row">
+          <div class="nu-group">
+            <label class="nu-label">Contrasena <span class="req">*</span></label>
+            <div class="pw-wrap">
+              <input type="password" name="password" id="pwNew" class="nu-input"
+                     required placeholder="Minimo 6 caracteres" minlength="6">
+              <button type="button" class="pw-toggle" onclick="togglePw('pwNew',this)">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="nu-group">
+            <label class="nu-label">Confirmar contrasena <span class="req">*</span></label>
+            <div class="pw-wrap">
+              <input type="password" name="password_confirm" id="pwConf" class="nu-input"
+                     required placeholder="Repite la contrasena">
+              <button type="button" class="pw-toggle" onclick="togglePw('pwConf',this)">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <div id="pw-match-msg" class="pw-msg"></div>
+          </div>
+        </div>
+        <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;font-size:11px;color:#92400e">
+          <i class="fas fa-info-circle"></i>
+          Comparte las credenciales con el usuario de forma segura. El sistema no envia email automatico al crear la cuenta.
+        </div>
+      </div>
+    </div>
+
+    {# Botones #}
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <a href="{{ url_for('admin.usuarios') }}" class="btn-cancel">
+        <i class="fas fa-arrow-left"></i> Cancelar
+      </a>
+      <button type="submit" class="btn-save">
+        <i class="fas fa-user-plus"></i> Crear Usuario
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+function togglePw(id, btn) {
+  const input = document.getElementById(id);
+  const isText = input.type === 'text';
+  input.type = isText ? 'password' : 'text';
+  btn.innerHTML = isText ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+}
+
+const pwNew  = document.getElementById('pwNew');
+const pwConf = document.getElementById('pwConf');
+const msg    = document.getElementById('pw-match-msg');
+
+function checkPw() {
+  if (!pwNew.value && !pwConf.value) { msg.textContent = ''; return; }
+  if (pwNew.value === pwConf.value) {
+    msg.innerHTML = '<span style="color:#16a34a">Coinciden</span>';
+  } else {
+    msg.innerHTML = '<span style="color:#dc2626">No coinciden</span>';
+  }
+}
+pwNew.addEventListener('input', checkPw);
+pwConf.addEventListener('input', checkPw);
+
+// Descripcion del rol
+const rolDesc = {
+  'usuario': 'El usuario podra crear y consultar sus propios tickets.',
+  'tecnico': 'Puede atender, resolver y cerrar tickets asignados. Accede al panel admin.',
+  'jefe':    'Acceso completo al panel administrativo y reportes.',
+  'admin':   'Control total del sistema: usuarios, equipos, tickets y configuracion.'
+};
+document.getElementById('selectRol').addEventListener('change', function() {
+  document.getElementById('rol-desc').textContent = rolDesc[this.value] || '';
+});
+
+document.getElementById('form-nuevo-usuario').addEventListener('submit', function(e) {
+  if (pwNew.value !== pwConf.value) {
+    e.preventDefault();
+    checkPw();
+    pwConf.focus();
+    return;
+  }
+  if (pwNew.value.length < 6) {
+    e.preventDefault();
+    pwNew.focus();
+    return;
+  }
+});
+</script>
+{% endblock %}

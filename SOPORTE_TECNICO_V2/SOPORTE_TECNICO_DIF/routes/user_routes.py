@@ -297,8 +297,18 @@ def perfil():
                 session['email'] = email
             if foto_filename:
                 session['foto'] = foto_filename
+            if password_new:
+                try:
+                    from dao.base_dao import BaseDAO as _BD
+                    _BD.execute_query(
+                        "UPDATE usuarios SET primer_login = 0 WHERE id = %s",
+                        (session['user_id'],), commit=True
+                    )
+                except Exception:
+                    pass
+                session.pop('primer_login', None)
             session.modified = True
-            flash('Perfil actualizado correctamente', 'success')
+            flash('Perfil actualizado correctamente.', 'success')
         elif ok == 'email_duplicado':
             flash('Ese correo ya está en uso por otro usuario', 'danger')
         else:
@@ -415,7 +425,9 @@ def api_notificaciones():
             """SELECT id_notificacion, tipo, titulo, mensaje, leida, url_accion,
                       DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i') AS fecha_fmt
                FROM notificaciones
-               WHERE id_usuario = %s AND (oculta IS NULL OR oculta = 0)
+               WHERE id_usuario = %s
+                 AND (oculta IS NULL OR oculta = 0)
+                 AND (tipo_destinatario IS NULL OR tipo_destinatario = 'usuario')
                ORDER BY fecha_creacion DESC
                LIMIT 5""",
             (session['user_id'],),
@@ -462,6 +474,18 @@ def ocultar_notificacion(id_notif):
     return jsonify({'ok': True})
 
 
+@user_bp.route('/api/notificaciones/borrar-todas', methods=['POST'])
+@login_required
+def borrar_todas_notificaciones():
+    """Borra permanentemente todas las notificaciones del usuario."""
+    from dao.base_dao import BaseDAO
+    BaseDAO.execute_query(
+        "DELETE FROM notificaciones WHERE id_usuario = %s",
+        (session['user_id'],), commit=True
+    )
+    return jsonify({'ok': True})
+
+
 # ──────────────────────────────────────────────
 # HISTORIAL DE NOTIFICACIONES (USUARIO)
 # ──────────────────────────────────────────────
@@ -475,7 +499,7 @@ def historial_notificaciones():
     filtro_anio = request.args.get('anio', '')
     filtro_tipo = request.args.get('tipo', '')
 
-    where  = ["id_usuario = %s"]
+    where  = ["id_usuario = %s", "(tipo_destinatario IS NULL OR tipo_destinatario = 'usuario')"]
     params = [user_id]
     if filtro_dia:  where.append("DAY(fecha_creacion) = %s");   params.append(filtro_dia)
     if filtro_mes:  where.append("MONTH(fecha_creacion) = %s"); params.append(filtro_mes)

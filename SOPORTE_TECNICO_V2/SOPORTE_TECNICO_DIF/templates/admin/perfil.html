@@ -325,18 +325,32 @@ body{background:var(--page-bg);font-family:'DM Sans',system-ui,sans-serif}
                        placeholder="Tu área de trabajo">
               </div>
 
-              <div class="field">
-                <label>Rol</label>
-                <div class="role-display">
-                  <span class="pill">{{ usuario.rol_nombre if usuario else session.rol }}</span>
-                  <i class="fas fa-lock" style="margin-left:auto;font-size:.68rem;color:#94a3b8"></i>
-                </div>
-                <span class="field-hint">
-                  <i class="fas fa-info-circle"></i>
-                  Solo el administrador puede modificar el rol
-                </span>
+                          <div class="field">
+              <label>Rol</label>
+              {% set mi_rol = (session.rol or 'usuario')|lower %}
+              {% if mi_rol in ('admin','jefe') %}
+              <select name="rol" style="padding:.6rem .9rem;font-size:.85rem;font-family:'DM Sans',system-ui;border:1.5px solid var(--border);border-radius:9px;background:#fff;color:var(--slate);transition:all .14s;outline:none;width:100%">
+                {% set r_actual = (usuario.rol_nombre or 'tecnico')|lower %}
+                <option value="tecnico" {% if r_actual == 'tecnico' %}selected{% endif %}>Técnico</option>
+                <option value="jefe"    {% if r_actual == 'jefe'    %}selected{% endif %}>Jefe</option>
+                {% if mi_rol == 'admin' %}
+                <option value="admin"   {% if r_actual == 'admin'   %}selected{% endif %}>Admin</option>
+                <option value="usuario" {% if r_actual == 'usuario'  %}selected{% endif %}>Usuario</option>
+                {% endif %}
+              </select>
+              <div style="font-size:.68rem;color:#0d9488;margin-top:3px">
+                <i class="fas fa-check-circle"></i> Puedes editar tu rol
               </div>
-
+              {% else %}
+              <div style="position:relative">
+                <input type="text" value="{{ (usuario.rol_nombre or 'N/A')|capitalize }}"
+                       readonly style="background:#f1f5f9;color:#94a3b8;cursor:not-allowed">
+                <i class="fas fa-lock" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#cbd5e1;font-size:11px"></i>
+              </div>
+              <div style="font-size:.68rem;color:#94a3b8;margin-top:3px">
+                <i class="fas fa-info-circle"></i> Solo el administrador puede modificar el rol
+              </div>
+              {% endif %}
             </div>
           </div>
         </div>

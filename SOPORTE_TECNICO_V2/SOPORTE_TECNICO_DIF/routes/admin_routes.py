@@ -1,12 +1,5 @@
 """
-FIXES:
-  - dashboard: tecnicos_carga con JOIN real a tickets
-  - perfil(): foto se guarda correctamente
-  - exportar CSV: streaming inmediato
-  - usuarios(): query con total_tickets via LEFT JOIN
-  - NUEVO: rutas CRUD de equipos (nuevo, editar, eliminar)
-  - NUEVO: ocultar notificacion del panel (oculta=1, no borra BD)
-  - FIX: api_notificaciones filtra oculta=0
+    Rutas para administración (dashboard, gestión de tickets, usuarios, equipos, estadísticas)
 """
 from flask import (Blueprint, render_template, request,
                    redirect, url_for, session, flash, jsonify,
@@ -211,23 +204,36 @@ def cerrar_ticket(id_ticket):
 @admin_bp.route('/usuarios')
 @admin_required
 def usuarios():
-    tecnicos     = UsuarioDAO.obtener_tecnicos()
+    tecnicos_raw = BaseDAO.execute_query(
+        """SELECT id_tecnico AS id_usuario,
+                  CONCAT(nombre,' ',apellido) AS nombre_completo,
+                  email, area, telefono, rol AS rol_nombre, activo
+           FROM tecnicos ORDER BY nombre""",
+        fetch_all=True
+    ) or []
+
     clientes_raw = BaseDAO.execute_query(
-        """SELECT u.id AS id_usuario, u.nombre AS nombre_completo,
-                  u.email, u.area, u.telefono, u.rol AS rol_nombre, u.activo,
+        """SELECT u.id AS id_usuario,
+                  u.nombre AS nombre_completo,
+                  u.email, u.area, u.telefono,
+                  u.rol AS rol_nombre, u.activo,
                   COUNT(t.id_ticket) AS total_tickets
            FROM usuarios u
            LEFT JOIN tickets t ON t.id_usuario = u.id
-           WHERE u.activo = 1
            GROUP BY u.id ORDER BY u.nombre""",
         fetch_all=True
     ) or []
+
     areas = {}
     for c in clientes_raw:
         areas.setdefault(c.get('area') or 'Sin área', []).append(c)
-    return render_template('admin/usuarios.html', clientes=clientes_raw, tecnicos=tecnicos,
-                           areas=areas, total_clientes=len(clientes_raw),
-                           total_tecnicos=len(tecnicos))
+
+    return render_template('admin/usuarios.html',
+                           clientes=clientes_raw,
+                           tecnicos=tecnicos_raw,
+                           areas=areas,
+                           total_clientes=len(clientes_raw),
+                           total_tecnicos=len(tecnicos_raw))
 
 
 @admin_bp.route('/usuarios/nuevo', methods=['GET', 'POST'])
@@ -250,6 +256,100 @@ def nuevo_usuario():
             return redirect(url_for('admin.usuarios'))
         flash('Error al crear el usuario.', 'danger')
     return render_template('admin/nuevo_usuario.html')
+
+
+@admin_bp.route('/usuarios/<int:id_usuario>/editar', methods=['GET', 'POST'])
+@admin_required
+def editar_usuario(id_usuario):
+    usuario = UsuarioDAO.obtener_por_id(id_usuario)
+    if not usuario:
+        flash('Usuario no encontrado', 'danger')
+        return redirect(url_for('admin.usuarios'))
+
+    if request.method == 'POST':
+        from werkzeug.security import generate_password_hash
+        nombre       = request.form.get('nombre', '').strip()
+        apellido     = request.form.get('apellido', '').strip()
+        email        = request.form.get('email', '').strip().lower()
+        area         = request.form.get('area', '').strip()
+        telefono     = request.form.get('telefono', '').strip()
+        rol          = request.form.get('rol', '').strip()
+        activo       = int(request.form.get('activo', 1))
+        password_new = request.form.get('password_new', '').strip()
+
+        if not nombre or not email:
+            flash('Nombre y correo son obligatorios.', 'warning')
+            return render_template('admin/editar_usuario.html', usuario=usuario, areas=AREAS_DIF)
+
+        datos = {
+            'nombre':       nombre,
+            'apellido':     apellido,
+            'email':        email,
+            'area':         area,
+            'telefono':     telefono or None,
+            'rol':          rol,
+            'activo':       activo,
+            'password_new': password_new or None,
+        }
+        ok = UsuarioDAO.actualizar_usuario_completo(id_usuario, datos, rol_sesion='admin')
+        if ok:
+            flash(f'Usuario {nombre} actualizado correctamente.', 'success')
+        else:
+            flash('Error al actualizar el usuario.', 'danger')
+        return redirect(url_for('admin.usuarios'))
+
+    return render_template('admin/editar_usuario.html', usuario=usuario, areas=AREAS_DIF)
+
+
+@admin_bp.route('/usuarios/<int:id_usuario>/eliminar', methods=['POST'])
+@admin_required
+def eliminar_usuario(id_usuario):
+    if id_usuario == session.get('user_id'):
+        flash('No puedes eliminar tu propia cuenta.', 'danger')
+        return redirect(url_for('admin.usuarios'))
+
+    usuario = UsuarioDAO.obtener_por_id(id_usuario)
+    if not usuario:
+        flash('Usuario no encontrado.', 'danger')
+        return redirect(url_for('admin.usuarios'))
+
+    activos = BaseDAO.execute_query(
+        "SELECT COUNT(*) AS c FROM tickets WHERE id_usuario = %s AND estado IN ('Abierto','En Proceso')",
+        (id_usuario,), fetch_one=True
+    )
+    if activos and activos['c'] > 0:
+        flash(f'No se puede eliminar: tiene {activos["c"]} ticket(s) activo(s).', 'danger')
+        return redirect(url_for('admin.usuarios'))
+
+    es_tecnico = (usuario.get('rol_nombre') or '').lower() in ('admin','tecnico','jefe')
+    if es_tecnico:
+        BaseDAO.execute_query('DELETE FROM tecnicos WHERE id_tecnico = %s', (id_usuario,), commit=True)
+    else:
+        BaseDAO.execute_query('DELETE FROM usuarios WHERE id = %s', (id_usuario,), commit=True)
+
+    flash('Usuario eliminado correctamente.', 'success')
+    return redirect(url_for('admin.usuarios'))
+
+
+@admin_bp.route('/usuarios/<int:id_usuario>/toggle-activo', methods=['POST'])
+@admin_required
+def toggle_activo_usuario(id_usuario):
+    if id_usuario == session.get('user_id'):
+        return jsonify({'ok': False, 'error': 'No puedes desactivarte a ti mismo'})
+
+    usuario = UsuarioDAO.obtener_por_id(id_usuario)
+    if not usuario:
+        return jsonify({'ok': False, 'error': 'No encontrado'})
+
+    nuevo = 0 if usuario.get('activo') else 1
+    es_tecnico = (usuario.get('rol_nombre') or '').lower() in ('admin','tecnico','jefe')
+    tabla = 'tecnicos' if es_tecnico else 'usuarios'
+    pk    = 'id_tecnico' if es_tecnico else 'id'
+    BaseDAO.execute_query(
+        f'UPDATE {tabla} SET activo = %s WHERE {pk} = %s',
+        (nuevo, id_usuario), commit=True
+    )
+    return jsonify({'ok': True, 'activo': nuevo})
 
 
 # ──────────────────────────────────────────────
@@ -290,7 +390,7 @@ def nuevo_equipo():
                                 equipo=None, areas=AREAS_DIF, tipos=TIPOS_EQUIPO)
         id_nuevo = EquipoDAO.crear_equipo(datos)
         if id_nuevo:
-            flash(f'Equipo dado de alta correctamente', 'success')
+            flash('Equipo dado de alta correctamente', 'success')
             return redirect(url_for('admin.equipos'))
         flash('Error al dar de alta el equipo.', 'danger')
     return render_template('admin/nuevo_equipo.html',
@@ -338,29 +438,58 @@ def api_estadisticas():
     return jsonify(TicketDAO.obtener_estadisticas())
 
 
+# ──────────────────────────────────────────────
+# EXPORTAR REPORTE  (CSV / PDF / Word)
+# URL: /admin/exportar-reporte/csv
+#      /admin/exportar-reporte/csv?periodo=hoy
+#      /admin/exportar-reporte/pdf?periodo=semana
+#      /admin/exportar-reporte/word?periodo=mes
+#      /admin/exportar-reporte/word?periodo=año
+# ──────────────────────────────────────────────
 @admin_bp.route('/exportar-reporte/<formato>')
 @admin_required
 def exportar_reporte(formato):
-    from utils.reportes import ReportesManager
-    ahora = now_mx().strftime("%Y%m%d_%H%M%S")
+    from utils.reportes_pdf import ReportesManager   # import directo — sin pasar por reportes.py
+
+    # Período opcional via query string
+    periodo = request.args.get('periodo') or None
+    if periodo not in {None, 'hoy', 'semana', 'mes', 'año'}:
+        periodo = None
+
+    ahora    = now_mx().strftime("%Y%m%d_%H%M%S")
+    etiqueta = periodo or 'todos'
+    stats    = TicketDAO.obtener_estadisticas(periodo=periodo)
+    lista    = TicketDAO.obtener_todos(periodo=periodo)
+
     if formato == 'csv':
-        contenido = ReportesManager.generar_reporte_csv(TicketDAO.obtener_todos())
-        return Response(stream_with_context(iter([contenido])),
-                        mimetype='text/csv; charset=utf-8',
-                        headers={'Content-Disposition': f'attachment; filename=tickets_{ahora}.csv'})
-    elif formato in ('txt','json'):
-        stats = TicketDAO.obtener_estadisticas()
-        lista = TicketDAO.obtener_todos()
-        if formato == 'txt':
-            c = ReportesManager.generar_reporte_texto(stats, lista)
-            mime = 'text/plain; charset=utf-8'
-        else:
-            c = ReportesManager.generar_reporte_json(stats, lista)
-            mime = 'application/json; charset=utf-8'
-        r = make_response(c)
-        r.headers['Content-Type']        = mime
-        r.headers['Content-Disposition'] = f'attachment; filename=reporte_{ahora}.{formato}'
+        contenido = ReportesManager.generar_reporte_csv(lista)
+        return Response(
+            stream_with_context(iter([contenido])),
+            mimetype='text/csv; charset=utf-8-sig',
+            headers={'Content-Disposition': f'attachment; filename=tickets_{etiqueta}_{ahora}.csv'}
+        )
+
+    elif formato == 'pdf':
+        html_str = ReportesManager.generar_reporte_pdf(stats, lista)
+        r = make_response(html_str)
+        r.headers['Content-Type'] = 'text/html; charset=utf-8'
         return r
+
+    elif formato == 'word':
+        try:
+            docx_bytes = ReportesManager.generar_reporte_word(stats, lista)
+            r = make_response(docx_bytes)
+            r.headers['Content-Type'] = (
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            )
+            r.headers['Content-Disposition'] = (
+                f'attachment; filename=reporte_{etiqueta}_{ahora}.docx'
+            )
+            return r
+        except Exception as e:
+            flash(f'Error al generar Word: {e}', 'danger')
+            return redirect(url_for('admin.estadisticas'))
+
     flash('Formato no soportado', 'danger')
     return redirect(url_for('admin.estadisticas'))
 
@@ -396,10 +525,20 @@ def marcar_notificaciones_leidas():
     return jsonify({"ok": True})
 
 
+@admin_bp.route('/api/notificaciones/borrar-todas', methods=['POST'])
+@admin_required
+def borrar_todas_notificaciones():
+    user_id = session.get('user_id')
+    BaseDAO.execute_query(
+        "DELETE FROM notificaciones WHERE id_usuario = %s",
+        (user_id,), commit=True
+    )
+    return jsonify({"ok": True})
+
+
 @admin_bp.route('/api/notificaciones/<int:id_notif>/ocultar', methods=['POST'])
 @admin_required
 def ocultar_notificacion(id_notif):
-    """Oculta la notificacion del panel sin borrarla de la BD (para auditoría)."""
     user_id = session.get('user_id')
     BaseDAO.execute_query(
         "UPDATE notificaciones SET oculta = 1 WHERE id_notificacion = %s AND id_usuario = %s",
@@ -427,7 +566,6 @@ def historial_notificaciones():
     if filtro_anio: where.append("YEAR(fecha_creacion) = %s");  params.append(filtro_anio)
     if filtro_tipo: where.append("tipo = %s");                  params.append(filtro_tipo)
 
-    # Historial muestra TODO — incluso ocultas — para auditoría completa
     sql = f"""SELECT id_notificacion, tipo, titulo, mensaje, leida, oculta, url_accion,
                      DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i') AS fecha_fmt,
                      YEAR(fecha_creacion)  AS anio,
@@ -489,9 +627,14 @@ def perfil():
                     foto.save(ruta)
                     if os.path.exists(ruta):
                         foto_filename = fn
+        rol_nuevo = request.form.get('rol', '').strip()
         datos = {'nombre':nombre,'apellido':apellido,'email':email,'telefono':telefono,
-                 'area':area,'password_new':password_new or None,'foto':foto_filename}
+                 'area':area,'password_new':password_new or None,'foto':foto_filename,
+                 'rol': rol_nuevo or None}
         ok = UsuarioDAO.actualizar_usuario_completo(session['user_id'], datos, session.get('rol','admin'))
+        if ok and rol_nuevo and rol_nuevo != session.get('rol'):
+            session['rol'] = rol_nuevo
+            session.modified = True
         if ok:
             if nombre: session['nombre'] = f"{nombre} {apellido}".strip()
             if email:  session['email']  = email

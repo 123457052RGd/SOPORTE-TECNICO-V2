@@ -1,7 +1,6 @@
 """
 Rutas de autenticación - Flask + MySQL + bcrypt (werkzeug)
-NOTA: primer_login se detecta por password = 'TEMPORAL' en sesión,
-      sin consulta extra a BD (evita error si la columna no existe).
+Desarrollado por: ING Diego Rubio Guerrero - 2026
 """
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from functools import wraps
@@ -62,23 +61,26 @@ def login():
             session['rol']     = usuario['rol_nombre']
             session['foto']    = perfil['foto'] if perfil and perfil.get('foto') else None
 
-            # ── Detectar primer login por columna primer_login (si existe) ──
-            # Si la columna no existe en BD, se ignora silenciosamente
+            # ── Detectar primer login: buscar SOLO en la tabla correcta ──
             try:
                 from dao.base_dao import BaseDAO
-                flag = BaseDAO.execute_query(
-                    """SELECT primer_login FROM tecnicos WHERE id_tecnico = %s
-                       UNION ALL
-                       SELECT primer_login FROM usuarios WHERE id = %s
-                       LIMIT 1""",
-                    (usuario['id_usuario'], usuario['id_usuario']),
-                    fetch_one=True
-                )
-                if flag and flag.get('primer_login'):
+                es_tec = usuario.get('rol_nombre','') in ('admin','tecnico','jefe')
+                if es_tec:
+                    flag = BaseDAO.execute_query(
+                        "SELECT primer_login FROM tecnicos WHERE id_tecnico = %s",
+                        (usuario['id_usuario'],), fetch_one=True
+                    )
+                else:
+                    flag = BaseDAO.execute_query(
+                        "SELECT primer_login FROM usuarios WHERE id = %s",
+                        (usuario['id_usuario'],), fetch_one=True
+                    )
+                if flag and flag.get('primer_login') == 1:
                     session['primer_login'] = True
+                else:
+                    session.pop('primer_login', None)
             except Exception:
-                # Columna no existe aún — no hay problema, se ignora
-                pass
+                session.pop('primer_login', None)
 
             flash(f'¡Bienvenido, {usuario["nombre_completo"]}!', 'success')
 

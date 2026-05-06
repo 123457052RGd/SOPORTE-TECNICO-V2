@@ -1,86 +1,55 @@
-"""
-Módulo de generación de reportes - Sistema DIF
-"""
-from datetime import datetime
-import json
+# ─────────────────────────────────────────────────────────────────────────────
+# REEMPLAZA la función exportar_reporte en routes/admin_routes.py
+# (busca "@admin_bp.route('/exportar-reporte/<formato>')" y sustituye
+#  todo el bloque hasta el siguiente @admin_bp.route)
+# ─────────────────────────────────────────────────────────────────────────────
 
+@admin_bp.route('/exportar-reporte/<formato>')
+@admin_required
+def exportar_reporte(formato):
+    from utils.reportes_pdf import ReportesManager   # ← import directo, sin pasar por reportes.py
 
-class ReportesManager:
+    # Período opcional: ?periodo=hoy | semana | mes | año   (sin nada = todos)
+    periodo = request.args.get('periodo') or None
+    PERIODOS_VALIDOS = {'hoy', 'semana', 'mes', 'año'}
+    if periodo and periodo not in PERIODOS_VALIDOS:
+        periodo = None
 
-    @staticmethod
-    def generar_reporte_texto(stats, tickets):
-        lineas = [
-            "=" * 60,
-            "ITIL HELPDESK - REPORTE DE TICKETS",
-            "Sistema DIF El Marques - Soporte Tecnico",
-            "=" * 60,
-            f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}",
-            "",
-            "ESTADISTICAS GENERALES",
-            "-" * 60,
-            f"Total de tickets: {stats.get('total', 0)}",
-            "",
-            "Tickets por estado:",
-        ]
-        for e in stats.get('por_estado', []):
-            lineas.append(f"  - {e['nombre']}: {e['cantidad']}")
-        lineas.append("")
-        lineas.append("Tickets por prioridad:")
-        for p in stats.get('por_prioridad', []):
-            lineas.append(f"  - {p['nombre']}: {p['cantidad']}")
-        lineas.append("")
-        lineas.append("Tipos de problema mas frecuentes:")
-        for t in stats.get('por_tipo', []):
-            lineas.append(f"  - {t['nombre']}: {t['cantidad']}")
-        lineas.append("")
-        lineas.append("LISTA DE TICKETS (ultimos 20)")
-        lineas.append("-" * 60)
-        for ticket in tickets[:20]:
-            lineas.append(f"Folio:   {ticket.get('folio', '')}")
-            lineas.append(f"Titulo:  {ticket.get('titulo', '')}")
-            lineas.append(f"Estado:  {ticket.get('estado', '')} | Prioridad: {ticket.get('prioridad', '')}")
-            lineas.append(f"Usuario: {ticket.get('nombre_usuario', '')} - {ticket.get('area_usuario', '')}")
-            if ticket.get('nombre_tecnico'):
-                lineas.append(f"Tecnico: {ticket['nombre_tecnico']}")
-            lineas.append("")
-        lineas += ["=" * 60, "Fin del reporte"]
-        return "\n".join(lineas)
+    ahora = now_mx().strftime("%Y%m%d_%H%M%S")
+    stats = TicketDAO.obtener_estadisticas(periodo=periodo)
+    lista = TicketDAO.obtener_todos(periodo=periodo)
 
-    @staticmethod
-    def generar_reporte_json(stats, tickets):
-        return json.dumps({
-            'fecha_generacion': datetime.now().isoformat(),
-            'sistema': 'ITIL Helpdesk - Sistema DIF El Marques',
-            'estadisticas': stats,
-            'tickets': tickets
-        }, indent=2, ensure_ascii=False, default=str)
+    # Etiqueta legible para el nombre del archivo
+    etiqueta = {'hoy': 'hoy', 'semana': 'semana', 'mes': 'mes', 'año': 'año'}.get(periodo, 'todos')
 
-    @staticmethod
-    def generar_reporte_csv(tickets):
-        filas = ["Folio,Titulo,Usuario,Area,Estado,Prioridad,Tecnico,Fecha Creacion"]
-        for t in tickets:
-            fila = [
-                str(t.get('folio', '')),
-                str(t.get('titulo', '')).replace(',', ';'),
-                str(t.get('nombre_usuario', '')).replace(',', ';'),
-                str(t.get('area_usuario', '')).replace(',', ';'),
-                str(t.get('estado', '')),
-                str(t.get('prioridad', '')),
-                str(t.get('nombre_tecnico', 'Sin asignar')).replace(',', ';'),
-                str(t.get('fecha_creacion', ''))[:16],
-            ]
-            filas.append(','.join(fila))
-        return "\n".join(filas)
+    if formato == 'csv':
+        contenido = ReportesManager.generar_reporte_csv(lista)
+        return Response(
+            stream_with_context(iter([contenido])),
+            mimetype='text/csv; charset=utf-8-sig',
+            headers={'Content-Disposition': f'attachment; filename=tickets_{etiqueta}_{ahora}.csv'}
+        )
 
-    @staticmethod
-    def calcular_metricas_desempeno(tickets):
-        total     = len(tickets)
-        resueltos = len([t for t in tickets if t.get('estado') in ('Resuelto', 'Cerrado')])
-        return {
-            'tickets_totales':    total,
-            'tickets_resueltos':  resueltos,
-            'tickets_pendientes': len([t for t in tickets if t.get('estado') == 'Abierto']),
-            'tickets_en_proceso': len([t for t in tickets if t.get('estado') == 'En Proceso']),
-            'tickets_criticos':   len([t for t in tickets if t.get('prioridad') == 'Critica']),
-            'tasa_resolucion':    round((resueltos / total * 100), 2) if total else 0,
-        }
+    elif formato == 'pdf':
+        html_str = ReportesManager.generar_reporte_pdf(stats, lista)
+        r = make_response(html_str)
+        r.headers['Content-Type'] = 'text/html; charset=utf-8'
+        return r
+
+    elif formato == 'word':
+        try:
+            docx_bytes = ReportesManager.generar_reporte_word(stats, lista)
+            r = make_response(docx_bytes)
+            r.headers['Content-Type'] = (
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            )
+            r.headers['Content-Disposition'] = (
+                f'attachment; filename=reporte_{etiqueta}_{ahora}.docx'
+            )
+            return r
+        except Exception as e:
+            flash(f'Error al generar Word: {e}', 'danger')
+            return redirect(url_for('admin.estadisticas'))
+
+    flash('Formato no soportado', 'danger')
+    return redirect(url_for('admin.estadisticas'))

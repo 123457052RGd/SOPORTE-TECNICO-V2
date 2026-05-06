@@ -4,3 +4,49 @@ __pycache__/
 *.pyo
 .env
 *.sqlite
+
+# ── Secretos — NUNCA subir al repo ────────────────────────
+.env
+*.env
+.env.*
+
+# ── Python ─────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# ── Entornos virtuales ──────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Uploads de usuarios — no van al repo ───────────────────
+static/uploads/*
+!static/uploads/.gitkeep
+
+# ── Logs ───────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Base de datos local ─────────────────────────────────────
+*.sql.bak
+*.sqlite
+*.db
+
+# ── IDEs ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+
+# ── OS ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini

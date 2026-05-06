@@ -1,13 +1,5 @@
 """
-DAO para usuarios - MySQL
-BD: equipos_dif
-
-FIXES v3:
-  - obtener_por_id: CORREGIDO bug crítico que mostraba datos del técnico cuando
-    un usuario normal tenía el mismo ID numérico que un técnico.
-    Ahora acepta parámetro `rol` para buscar en la tabla correcta directamente.
-  - actualizar_usuario_completo: foto y cambios siempre se guardan correctamente.
-  - Eliminados print() de debug.
+DAO de usuarios. Soporta tanto usuarios normales como técnicos/jefes/admins.
 """
 from dao.base_dao import BaseDAO
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -192,6 +184,8 @@ class UsuarioDAO(BaseDAO):
     def actualizar_usuario_completo(id_usuario, datos, rol_sesion='usuario'):
         """
         Actualiza perfil en la tabla correcta según el rol de sesión.
+        Técnicos/Jefes/Admins SÍ pueden cambiar el campo rol.
+        Usuarios finales NO pueden cambiar su propio rol.
         """
         try:
             es_tecnico = rol_sesion in ROLES_TECNICO
@@ -227,6 +221,20 @@ class UsuarioDAO(BaseDAO):
                 campos.append('foto = %s')
                 valores.append(foto_val.strip())
 
+            # ── ROL: solo técnicos/jefes/admins pueden cambiar el rol ──
+            if es_tecnico and datos.get('rol') and datos['rol'].strip():
+                roles_validos = ('usuario', 'tecnico', 'jefe', 'admin')
+                nuevo_rol = datos['rol'].strip().lower()
+                if nuevo_rol in roles_validos:
+                    campos.append('rol = %s')
+                    valores.append(nuevo_rol)
+
+            # ── PRIMER LOGIN: si cambió contraseña, quitar flag (ambas tablas) ──
+            if datos.get('password_new'):
+                if es_tecnico:
+                    campos.append('primer_login = %s')
+                    valores.append(0)
+
             if not campos:
                 return True  # nada que actualizar
 
@@ -236,10 +244,16 @@ class UsuarioDAO(BaseDAO):
 
             query = f"UPDATE {tabla} SET {', '.join(campos)} WHERE {pk} = %s"
             BaseDAO.execute_query(query, tuple(valores), commit=True)
+
+            # Limpiar primer_login en tabla usuarios también
+            if datos.get('password_new') and not es_tecnico:
+                BaseDAO.execute_query(
+                    "UPDATE usuarios SET primer_login = 0 WHERE id = %s",
+                    (id_usuario,), commit=True
+                )
             return True
 
         except Exception as e:
-            # Usar logger en producción en lugar de print
             try:
                 from flask import current_app
                 current_app.logger.error(f'[UsuarioDAO] Error actualizar perfil: {e}')

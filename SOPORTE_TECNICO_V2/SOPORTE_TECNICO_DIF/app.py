@@ -1,9 +1,9 @@
 """
 Sistema de Gestion de Soporte Tecnico por Tickets - DIF El Marques
 Flask + MySQL Workbench + bcrypt (werkzeug)
-Desarrollado por: ING Diego Rubio
+Desarrollado por: ING Diego Rubio Guerrero - 2026
 """
-from flask import Flask, render_template, redirect, url_for, session, jsonify
+from flask import Flask, render_template, redirect, url_for, session, jsonify, flash, request
 from flask_mail import Mail
 from dotenv import load_dotenv
 from datetime import timedelta
@@ -15,14 +15,13 @@ from utils.email_notificaciones import EmailNotificaciones
 load_dotenv()
 import os
 
-
-ROLES_ADMIN = ('admin', 'tecnico', 'jefe')
-
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dif-soporte-tecnico-2026')
 
 app.config['SESSION_PERMANENT'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
+
+ROLES_ADMIN = ('admin', 'tecnico', 'jefe')
 
 # ── Mail --------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------
@@ -91,10 +90,40 @@ def test_email():
 @app.before_request
 def verificar_sesion():
     from flask import request
+
     rutas_publicas = ('auth.login', 'auth.register', 'static', 'index', 'health')
+
+    # Permitir acceso libre a rutas públicas
     if request.endpoint in rutas_publicas:
         return
-    # Deja que los blueprints manejen su propia auth
+
+    # Si no hay sesión → no hacer nada (lo maneja login_required)
+    if 'user_id' not in session:
+        return
+
+    # 💡 SUGERIR CAMBIO DE CONTRASEÑA (solo aviso, no bloquea el sistema)
+    # El usuario puede navegar con normalidad, el mensaje aparece una sola vez
+    if session.get('primer_login'):
+        flash(
+            '🔔 Te recomendamos cambiar tu contraseña desde tu perfil.',
+            'warning'
+        )
+        # Limpiar el flag para que el aviso no aparezca en cada página
+        session.pop('primer_login', None)
+
+
+# ── Anti-cache — evita que el browser muestre dashboard tras logout ───
+@app.after_request
+def no_cache_protegido(response):
+    """
+    Cuando hay sesión activa, fuerza al browser a NO cachear las páginas.
+    Así al presionar 'Atrás' después de cerrar sesión no aparece el dashboard.
+    """
+    if 'user_id' in session:
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma']        = 'no-cache'
+        response.headers['Expires']       = '0'
+    return response
 
 
 # ── Context processor global ──────────────────────────────────

@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% block title %}Editar Usuario{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
+:root{--teal:#0d9488;--teal-dk:#0f766e;--teal-lt:#e0fdf4;--teal-mid:#99f6e4;--slate:#1e293b;--muted:#64748b;--border:#e2e8f0;--surface:#fff;--page-bg:#f0f4f8}
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--page-bg);font-family:'DM Sans',system-ui,sans-serif}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.pg-hdr{display:flex;align-items:center;gap:12px;margin-bottom:20px;animation:slideUp .3s ease both}
+.pg-back{
+  width:34px;height:34px;border-radius:9px;background:var(--surface);
+  border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;
+  color:var(--muted);text-decoration:none;font-size:12px;transition:all .15s;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);
+}
+.pg-back:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-lt)}
+.pg-title{font-size:20px;font-weight:800;color:var(--slate);margin:0;letter-spacing:-.3px;
+  display:flex;align-items:center;gap:9px}
+.pg-title .ico{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--teal-dk));
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;
+  box-shadow:0 3px 10px rgba(13,148,136,.25)}
+.pg-sub{font-size:12px;color:var(--muted);padding-left:43px;margin:2px 0 0}
+
+.form-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:18px;
+  overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  animation:slideUp .35s ease both;animation-delay:.06s;
+}
+
+.fc-section{padding:1.5rem;border-bottom:1px solid var(--border)}
+.fc-section:last-of-type{border-bottom:none}
+
+.fc-title{
+  font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--muted);display:flex;align-items:center;gap:7px;margin-bottom:1.1rem;
+}
+.fc-title .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:640px){.field-grid{grid-template-columns:1fr}}
+
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+.field input,.field select{
+  padding:.6rem .9rem;font-size:.85rem;font-family:'DM Sans',system-ui,sans-serif;
+  border:1.5px solid var(--border);border-radius:9px;background:#f8fafc;
+  color:var(--slate);transition:all .14s;outline:none;
+}
+.field input:focus,.field select:focus{
+  border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px rgba(13,148,136,.1);
+}
+
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:2.5rem!important}
+.pw-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:#94a3b8;cursor:pointer;padding:4px;font-size:.8rem;transition:color .14s}
+.pw-eye:hover{color:var(--muted)}
+
+/* Toggle activo */
+.toggle-wrap{display:flex;align-items:center;gap:10px}
+.toggle-switch{
+  position:relative;width:40px;height:22px;cursor:pointer;
+}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{
+  position:absolute;inset:0;border-radius:22px;
+  background:#e2e8f0;transition:background .2s;
+}
+.toggle-switch input:checked + .toggle-track{background:var(--teal)}
+.toggle-thumb{
+  position:absolute;width:16px;height:16px;border-radius:50%;
+  background:#fff;top:3px;left:3px;transition:transform .2s;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+.toggle-switch input:checked ~ .toggle-thumb{transform:translateX(18px)}
+.toggle-lbl{font-size:.82rem;font-weight:600;color:var(--muted)}
+
+/* Footer */
+.fc-footer{
+  padding:1rem 1.5rem;background:#f8fafc;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:flex-end;gap:10px;
+}
+.btn-cancel{
+  padding:.55rem 1.2rem;font-size:.82rem;border:1.5px solid var(--border);
+  border-radius:9px;background:transparent;color:var(--muted);
+  text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .14s;
+}
+.btn-cancel:hover{border-color:#94a3b8;color:var(--slate)}
+.btn-save{
+  padding:.6rem 1.5rem;font-size:.82rem;border:none;border-radius:9px;
+  background:linear-gradient(135deg,#0d9488,#0f766e);color:#fff;
+  font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  transition:all .15s;font-family:'DM Sans',system-ui,sans-serif;
+  box-shadow:0 3px 10px rgba(13,148,136,.25);
+}
+.btn-save:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(13,148,136,.35)}
+.btn-save:active{transform:scale(.97)}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:760px;margin:0 auto">
+
+  <div class="pg-hdr">
+    <a href="{{ url_for('admin.usuarios') }}" class="pg-back">
+      <i class="fas fa-arrow-left"></i>
+    </a>
+    <div>
+      <h1 class="pg-title">
+        <span class="ico"><i class="fas fa-user-edit"></i></span>
+        Editar Usuario
+      </h1>
+      <p class="pg-sub">Modificando: <strong>{{ usuario.nombre_completo or usuario.nombre }}</strong></p>
+    </div>
+  </div>
+
+  <form method="POST">
+    <div class="form-card">
+
+      {# ── DATOS PERSONALES ── #}
+      <div class="fc-section">
+        <div class="fc-title">
+          <span class="dot" style="background:var(--teal)"></span>
+          Datos personales
+        </div>
+        <div class="field-grid">
+
+          <div class="field">
+            <label>Nombre <span style="color:#ef4444">*</span></label>
+            <input type="text" name="nombre" required
+                   value="{{ usuario.nombre or '' }}" placeholder="Nombre">
+          </div>
+
+          <div class="field">
+            <label>Apellido</label>
+            <input type="text" name="apellido"
+                   value="{{ usuario.apellido or '' }}" placeholder="Apellido">
+          </div>
+
+          <div class="field">
+            <label>Correo electrónico <span style="color:#ef4444">*</span></label>
+            <input type="email" name="email" required
+                   value="{{ usuario.email or '' }}" placeholder="correo@ejemplo.com">
+          </div>
+
+          <div class="field">
+            <label>Teléfono</label>
+            <input type="text" name="telefono"
+                   value="{{ usuario.telefono or '' }}" placeholder="442 123 4567">
+          </div>
+
+          <div class="field">
+            <label>Área / Departamento</label>
+            <select name="area">
+              <option value="">— Sin área —</option>
+              {% set area_actual = usuario.area or '' %}
+              {% if areas %}
+                {% for a in areas %}
+                <option value="{{ a }}" {% if a == area_actual %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+              {% else %}
+                <option value="{{ area_actual }}" selected>{{ area_actual }}</option>
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Rol</label>
+            <select name="rol">
+              {% set rol_actual = (usuario.rol_nombre or 'usuario')|lower %}
+              <option value="usuario"   {% if rol_actual == 'usuario'  %}selected{% endif %}>Usuario</option>
+              <option value="tecnico"   {% if rol_actual == 'tecnico'  %}selected{% endif %}>Técnico</option>
+              <option value="jefe"      {% if rol_actual == 'jefe'     %}selected{% endif %}>Jefe</option>
+              <option value="admin"     {% if rol_actual == 'admin'    %}selected{% endif %}>Admin</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      {# ── ESTADO ── #}
+      <div class="fc-section">
+        <div class="fc-title">
+          <span class="dot" style="background:#22c55e"></span>
+          Estado de la cuenta
+        </div>
+        <div class="toggle-wrap">
+          <label class="toggle-switch">
+            <input type="checkbox" name="activo" value="1"
+                   {% if usuario.activo %}checked{% endif %}
+                   id="toggleActivo"
+                   onchange="document.getElementById('activoHidden').value=this.checked?1:0">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <input type="hidden" name="activo" id="activoHidden"
+                 value="{{ 1 if usuario.activo else 0 }}">
+          <span class="toggle-lbl" id="toggleLbl">
+            {{ 'Cuenta activa' if usuario.activo else 'Cuenta inactiva' }}
+          </span>
+        </div>
+      </div>
+
+      {# ── SEGURIDAD ── #}
+      <div class="fc-section">
+        <div class="fc-title">
+          <span class="dot" style="background:#f59e0b"></span>
+          Cambiar contraseña
+          <span style="font-size:.6rem;color:#94a3b8;font-weight:500;text-transform:none;letter-spacing:0">
+            — Dejar vacío para no cambiar
+          </span>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Nueva contraseña</label>
+            <div class="pw-wrap">
+              <input type="password" name="password_new" id="pwNew"
+                     placeholder="Mínimo 6 caracteres" minlength="6">
+              <button type="button" class="pw-eye" onclick="togglePw('pwNew',this)">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Confirmar contraseña</label>
+            <div class="pw-wrap">
+              <input type="password" id="pwConf" placeholder="Repite la contraseña">
+              <button type="button" class="pw-eye" onclick="togglePw('pwConf',this)">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <div id="pwMsg" style="font-size:.68rem;min-height:1rem;margin-top:2px"></div>
+          </div>
+        </div>
+      </div>
+
+      {# ── FOOTER ── #}
+      <div class="fc-footer">
+        <a href="{{ url_for('admin.usuarios') }}" class="btn-cancel">
+          <i class="fas fa-times"></i> Cancelar
+        </a>
+        <button type="submit" class="btn-save">
+          <i class="fas fa-save"></i> Guardar cambios
+        </button>
+      </div>
+
+    </div>
+  </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.querySelector('i').className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
+
+const pwNew  = document.getElementById('pwNew');
+const pwConf = document.getElementById('pwConf');
+const pwMsg  = document.getElementById('pwMsg');
+
+function checkPw() {
+  if (!pwNew.value && !pwConf.value) { pwMsg.innerHTML = ''; return; }
+  if (pwNew.value === pwConf.value)
+    pwMsg.innerHTML = '<span style="color:#16a34a"><i class="fas fa-check-circle me-1"></i>Coinciden</span>';
+  else
+    pwMsg.innerHTML = '<span style="color:#dc2626"><i class="fas fa-times-circle me-1"></i>No coinciden</span>';
+}
+pwNew.addEventListener('input', checkPw);
+pwConf.addEventListener('input', checkPw);
+
+document.getElementById('toggleActivo').addEventListener('change', function() {
+  document.getElementById('toggleLbl').textContent = this.checked ? 'Cuenta activa' : 'Cuenta inactiva';
+});
+
+document.querySelector('form').addEventListener('submit', function(e) {
+  if (pwNew.value && pwNew.value !== pwConf.value) {
+    e.preventDefault(); checkPw();
+    pwConf.focus(); pwConf.style.borderColor = '#ef4444';
+    setTimeout(() => pwConf.style.borderColor = '', 2000);
+  }
+});
+</script>
+{% endblock %}

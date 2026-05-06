@@ -4,113 +4,126 @@
 
 {% block content %}
 <div class="container-fluid">
+
     <h1 class="mb-4">
-        <i class="fas fa-list"></i> Gestión de Tickets
+        <i class="fas fa-ticket-alt"></i> Gestión de Tickets
     </h1>
 
-    <!-- Filtros -->
-    <div class="card mb-4">
+    <!-- 🔍 FILTROS -->
+    <div class="card shadow-sm mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ url_for('admin.tickets') }}" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Estado</label>
-                    <select name="estado" class="form-select">
-                        <option value="">Todos</option>
+            <form method="GET" class="row g-3">
+
+                <div class="col-md-3">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Buscar...">
+                </div>
+
+                <div class="col-md-3">
+                    <select id="filtroEstado" class="form-select">
+                        <option value="">Todos los estados</option>
                         {% for estado in estados %}
-                        <option value="{{ estado }}" {% if estado_filtro == estado %}selected{% endif %}>
-                            {{ estado }}
-                        </option>
+                        <option>{{ estado }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label">Prioridad</label>
-                    <select name="prioridad" class="form-select">
-                        <option value="">Todas</option>
+
+                <div class="col-md-3">
+                    <select id="filtroPrioridad" class="form-select">
+                        <option value="">Todas las prioridades</option>
                         {% for prioridad in prioridades %}
-                        <option value="{{ prioridad }}" {% if prioridad_filtro == prioridad %}selected{% endif %}>
-                            {{ prioridad }}
-                        </option>
+                        <option>{{ prioridad }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label">&nbsp;</label>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-filter"></i> Filtrar
-                        </button>
-                    </div>
+
+                <div class="col-md-3">
+                    <button class="btn btn-primary w-100">
+                        <i class="fas fa-filter"></i> Filtrar BD
+                    </button>
                 </div>
+
             </form>
         </div>
     </div>
 
-    <!-- Tabla de tickets -->
-    <div class="card">
+    <!-- 📊 TABLA -->
+    <div class="card shadow">
         <div class="card-body">
+
             {% if tickets %}
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
+
+                <table id="dataTable" class="table table-hover align-middle">
+
+                    <thead class="table-dark">
                         <tr>
                             <th>Folio</th>
                             <th>Usuario</th>
-                            <th>Área</th>
                             <th>Título</th>
-                            <th>Tipo</th>
                             <th>Prioridad</th>
                             <th>Estado</th>
                             <th>Técnico</th>
                             <th>Fecha</th>
-                            <th>Acciones</th>
+                            <th></th>
                         </tr>
                     </thead>
+
                     <tbody>
                         {% for ticket in tickets %}
                         <tr>
-                            <td><strong>{{ ticket.folio }}</strong></td>
+
+                            <td><strong>#{{ ticket.folio }}</strong></td>
+
                             <td>{{ ticket.nombre_usuario }}</td>
-                            <td>{{ ticket.area_usuario }}</td>
-                            <td>{{ (ticket.titulo or '')[:40] }}{% if ticket.titulo and ticket.titulo|length > 40 %}...{% endif %}</td>
-                            <td>{{ ticket.tipo_problema or 'N/A' }}</td>
+
+                            <td>{{ ticket.titulo[:30] }}...</td>
+
                             <td>
-                                <span class="badge" style="background-color: {{ ticket.color_prioridad }};">
+                                <span class="badge" style="background: {{ ticket.color_prioridad }}">
                                     {{ ticket.prioridad }}
                                 </span>
                             </td>
+
                             <td>
-                                <span class="badge" style="background-color: {{ ticket.color_estado }};">
+                                <span class="badge" style="background: {{ ticket.color_estado }}">
                                     {{ ticket.estado }}
                                 </span>
                             </td>
-                            <td>{{ ticket.nombre_tecnico or 'Sin asignar' }}</td>
+
                             <td>
-                                {% if ticket.fecha_creacion %}
-                                    {% if ticket.fecha_creacion is string %}
-                                        {{ ticket.fecha_creacion[:16] }}
-                                    {% else %}
-                                        {{ ticket.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}
-                                    {% endif %}
-                                {% else %}—{% endif %}
+                                {% if ticket.nombre_tecnico %}
+                                    {{ ticket.nombre_tecnico }}
+                                {% else %}
+                                    <span class="text-muted">Sin asignar</span>
+                                {% endif %}
                             </td>
+
                             <td>
-                                <a href="{{ url_for('admin.ver_ticket', id_ticket=ticket.id_ticket) }}" 
-                                   class="btn btn-sm btn-primary">
-                                    <i class="fas fa-cogs"></i> Gestionar
+                                {{ ticket.fecha_creacion[:16] if ticket.fecha_creacion else '—' }}
+                            </td>
+
+                            <td>
+                                <a href="{{ url_for('admin.ver_ticket', id_ticket=ticket.id_ticket) }}"
+                                   class="btn btn-sm btn-outline-primary">
+                                   <i class="fas fa-eye"></i>
                                 </a>
                             </td>
+
                         </tr>
                         {% endfor %}
                     </tbody>
+
                 </table>
+
             </div>
             {% else %}
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> No hay tickets que coincidan con los filtros seleccionados.
-            </div>
+                <div class="alert alert-info">
+                    No hay tickets
+                </div>
             {% endif %}
+
         </div>
     </div>
+
 </div>
 {% endblock %}

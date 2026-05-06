@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}ITIL Helpdesk - DIF{% endblock %}</title>
+  <meta name="description" content="ITIL Helpdesk — Sistema de Soporte Técnico DIF El Marqués">
+  <meta name="author" content="ING Diego Rubio Guerrero">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logodif.png') }}">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -173,7 +176,6 @@
     padding: 3px 8px; border-radius: 6px; transition: background .12s;
   }
   .notif-mark-all:hover { background: #e0fdf4; }
-  .notif-clear-all-placeholder { display: none; }
 
   .notif-list { max-height: 320px; overflow-y: auto; }
 
@@ -222,64 +224,6 @@
   }
   .notif-footer a:hover { background: #e0fdf4; }
 
-  /* Botón dismiss individual */
-  .notif-dismiss-btn {
-    width: 20px; height: 20px; border-radius: 5px;
-    background: transparent; border: none;
-    color: #cbd5e1; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 9px; transition: background .12s, color .12s;
-    padding: 0;
-  }
-  .notif-dismiss-btn:hover { background: #fee2e2; color: #ef4444; }
-
-  /* Botón borrar todas */
-  .notif-clear-all {
-    font-size: 10.5px; color: #ef4444; cursor: pointer;
-    font-weight: 600; border: 1px solid rgba(239,68,68,.2);
-    background: rgba(239,68,68,.05); padding: 3px 9px;
-    border-radius: 6px; transition: background .12s, border-color .12s;
-  }
-  .notif-clear-all:hover { background: #fee2e2; border-color: rgba(239,68,68,.4); }
-
-  /* ── ANIMACIONES GLOBALES ── */
-  @keyframes slideInUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes fadeInScale {
-    from { opacity: 0; transform: scale(.96); }
-    to   { opacity: 1; transform: scale(1); }
-  }
-  @keyframes shimmer {
-    0%   { background-position: -200% 0; }
-    100% { background-position:  200% 0; }
-  }
-
-  /* Cards con entrada animada */
-  .card, .tk-card, .stat-card {
-    animation: slideInUp .4s cubic-bezier(.22,1,.36,1) both;
-  }
-
-  /* Hover lift en cards */
-  .card:hover, .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(0,0,0,.10);
-    transition: transform .2s ease, box-shadow .2s ease;
-  }
-
-  /* Transición suave en badges de estado */
-  .badge, .badge-pill { transition: filter .15s, transform .15s; }
-  .badge:hover, .badge-pill:hover { filter: brightness(1.1); transform: scale(1.04); }
-
-  /* Skeleton loading */
-  .skeleton {
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s infinite;
-    border-radius: 6px;
-  }
-
   /* ── BARRA PRIMER LOGIN ───────────────────────────── */
   .primer-login-bar {
     background: linear-gradient(135deg, #fef3c7, #fde68a);
@@ -291,10 +235,11 @@
   .primer-login-bar a { color: #92400e; font-weight: 700; margin-left: 4px; }
 
   .footer { border-top: 1px solid #e2e8f0; background: #f8fafc; }
+  html, body { height: 100%; margin: 0; padding: 0; }
   </style>
   {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body style="{% if not session.get('user_id') %}background:#0a0f1e{% endif %}">
 
 {% if session.user_id %}
 {% set ES_ADMIN = session.rol in ('admin', 'tecnico', 'jefe') %}
@@ -327,7 +272,7 @@
         <li class="nav-item">
           <a class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}"
              href="{{ url_for('admin.dashboard') }}">
-            <i class="fas fa-chart-line"></i> Dashboard
+            <i class="fas fa-chart-line"></i> Inicio
           </a>
         </li>
         <li class="nav-item">
@@ -358,24 +303,18 @@
               </a>
             </li>
             <li>
-              <a class="dropdown-item" href="{{ url_for('admin.exportar_reporte', formato='txt') }}">
-                <i class="fas fa-file-alt" style="color:#3b82f6;font-size:12px"></i>
-                Exportar TXT
+              <a class="dropdown-item" href="{{ url_for('admin.exportar_reporte', formato='pdf') }}" target="_blank">
+                <i class="fas fa-file-pdf" style="color:#ef4444;font-size:12px"></i>
+                Exportar PDF
               </a>
             </li>
             <li>
-              <a class="dropdown-item" href="{{ url_for('admin.exportar_reporte', formato='json') }}">
-                <i class="fas fa-file-code" style="color:#8b5cf6;font-size:12px"></i>
-                Exportar JSON
+              <a class="dropdown-item" href="{{ url_for('admin.exportar_reporte', formato='word') }}">
+                <i class="fas fa-file-word" style="color:#2563eb;font-size:12px"></i>
+                Exportar Word
               </a>
             </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="{{ url_for('admin.estadisticas') }}">
-                <i class="fas fa-chart-bar" style="color:#0d9488;font-size:12px"></i>
-                Ver Estadísticas
-              </a>
-            </li>
+
           </ul>
         </li>
 
@@ -447,9 +386,16 @@
                 <i class="fas fa-bell" style="color:#0d9488;margin-right:5px"></i>
                 Notificaciones
               </span>
-              <button class="notif-clear-all" onclick="borrarTodasPanel()" title="Eliminar todas del panel">
-                <i class="fas fa-trash-alt" style="margin-right:4px;font-size:9px"></i>Borrar todas
-              </button>
+              <div style="display:flex;gap:5px">
+                <button class="notif-mark-all" onclick="marcarTodasLeidas()" title="Marcar leídas">
+                  <i class="fas fa-check-double"></i> Leídas
+                </button>
+                <button class="notif-mark-all" onclick="borrarTodasNotif()"
+                        style="background:#fee2e2;color:#991b1b"
+                        title="Borrar todas permanentemente">
+                  <i class="fas fa-trash"></i> Borrar
+                </button>
+              </div>
             </div>
             <div class="notif-list" id="notifList">
               <div class="notif-empty">
@@ -536,25 +482,11 @@
   </div>
 </nav>
 
-{# ── BARRA PRIMER LOGIN ── #}
-{% for msg in get_flashed_messages(category_filter=['primer_login']) %}
-<div class="primer-login-bar">
-  <i class="fas fa-shield-alt"></i>
-  <span>{{ msg }}
-    <a href="{{ url_for('user.perfil') if not ES_ADMIN else url_for('admin.perfil') }}">
-      Cambiar contraseña →
-    </a>
-  </span>
-  <button onclick="this.parentElement.style.display='none'"
-          style="margin-left:auto;background:none;border:none;color:#92400e;font-size:16px;cursor:pointer">
-    &times;
-  </button>
-</div>
-{% endfor %}
+{# fin navbar #}
 
 {% endif %}
 
-<main class="{% if session.user_id %}container-fluid py-3{% endif %}">
+<main class="{% if session.user_id %}container-fluid py-3{% else %}p-0 m-0{% endif %}" style="{% if not session.user_id %}min-height:100vh;overflow:hidden{% endif %}">
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       {% for category, message in messages %}
@@ -595,10 +527,9 @@
 
 {% if session.user_id %}
 <script>
-const NOTIF_URL        = "{{ url_for('admin.api_notificaciones') if ES_ADMIN else url_for('user.api_notificaciones') }}";
-const MARCAR_URL       = "{{ url_for('admin.marcar_notificaciones_leidas') if ES_ADMIN else url_for('user.marcar_notificaciones_leidas') }}";
-const OCULTAR_URL      = "{{ url_for('admin.ocultar_notificacion', id_notif=0) if ES_ADMIN else url_for('user.ocultar_notificacion', id_notif=0) }}";
-const OCULTAR_TODAS_URL = MARCAR_URL;
+const NOTIF_URL   = "{{ url_for('admin.api_notificaciones') if ES_ADMIN else url_for('user.api_notificaciones') }}";
+const MARCAR_URL  = "{{ url_for('admin.marcar_notificaciones_leidas') if ES_ADMIN else url_for('user.marcar_notificaciones_leidas') }}";
+const BORRAR_URL  = "{{ url_for('admin.borrar_todas_notificaciones') if ES_ADMIN else url_for('user.borrar_todas_notificaciones') }}";
 
 const ICONOS = {
   nuevo_ticket:  {ico:'fa-ticket-alt',   cls:'ico-info'},
@@ -650,19 +581,14 @@ function cargarNotificaciones() {
         const tipo  = ICONOS[n.tipo] || ICONOS['info'];
         const unread = !n.leida ? 'unread' : '';
         const url   = n.url_accion || '#';
-        return `<div class="notif-item ${unread}" id="notif-${n.id_notificacion}">
-          <div class="notif-ico ${tipo.cls}" onclick="irAUrl('${url}')" style="cursor:pointer"><i class="fas ${tipo.ico}"></i></div>
-          <div class="notif-body" onclick="irAUrl('${url}')" style="cursor:pointer">
+        return `<div class="notif-item ${unread}" onclick="irAUrl('${url}')">
+          <div class="notif-ico ${tipo.cls}"><i class="fas ${tipo.ico}"></i></div>
+          <div class="notif-body">
             <div class="notif-title">${n.titulo || ''}</div>
             <div class="notif-msg">${n.mensaje || ''}</div>
             <div class="notif-time">${n.fecha_fmt || ''}</div>
           </div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
-            ${!n.leida ? '<div class="notif-dot"></div>' : ''}
-            <button class="notif-dismiss-btn" onclick="borrarNotifIndividual(${n.id_notificacion}, document.getElementById('notif-${n.id_notificacion}'))" title="Quitar del panel">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
+          ${!n.leida ? '<div class="notif-dot"></div>' : ''}
         </div>`;
       }).join('');
     })
@@ -673,40 +599,26 @@ function irAUrl(url) {
   if (url && url !== '#') window.location.href = url;
 }
 
-function borrarTodasPanel() {
-  const items = document.querySelectorAll('.notif-item');
-  items.forEach((el, i) => {
-    el.style.transition = 'opacity .25s ' + (i*40) + 'ms, transform .25s ' + (i*40) + 'ms';
-    el.style.opacity = '0';
-    el.style.transform = 'translateX(20px)';
-  });
-  setTimeout(() => {
-    fetch(OCULTAR_TODAS_URL, {method:'POST', headers:{'X-CSRFToken': getCsrf()}})
-      .catch(() => {});
-    document.getElementById('notifBadge').classList.remove('show');
-    document.getElementById('notifList').innerHTML = '<div class="notif-empty"><i class="fas fa-bell-slash"></i>Sin notificaciones por ahora</div>';
-  }, items.length * 40 + 280);
+function marcarTodasLeidas() {
+  fetch(MARCAR_URL, {method:'POST', headers:{'X-CSRFToken': getCsrf()}})
+    .then(() => {
+      document.getElementById('notifBadge').classList.remove('show');
+      document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+      document.querySelectorAll('.notif-dot').forEach(el => el.remove());
+    })
+    .catch(() => {});
 }
 
-function borrarNotifIndividual(idNotif, el) {
-  el.style.transition = 'opacity .2s, transform .2s, max-height .25s .15s, padding .25s .15s';
-  el.style.opacity = '0';
-  el.style.transform = 'translateX(20px)';
-  el.style.maxHeight = el.scrollHeight + 'px';
-  setTimeout(() => {
-    el.style.maxHeight = '0';
-    el.style.padding = '0';
-    el.style.borderBottom = 'none';
-  }, 180);
-  setTimeout(() => {
-    el.remove();
-    const remaining = document.querySelectorAll('.notif-item').length;
-    if (remaining === 0) {
-      document.getElementById('notifList').innerHTML = '<div class="notif-empty"><i class="fas fa-bell-slash"></i>Sin notificaciones por ahora</div>';
+function borrarTodasNotif() {
+  if (!confirm('¿Borrar TODAS las notificaciones permanentemente? No se pueden recuperar.')) return;
+  fetch(BORRAR_URL, {method:'POST', headers:{'Content-Type':'application/json'}})
+    .then(r => r.json())
+    .then(() => {
       document.getElementById('notifBadge').classList.remove('show');
-    }
-  }, 450);
-  fetch(OCULTAR_URL.replace('0', idNotif), {method:'POST', headers:{'X-CSRFToken': getCsrf()}}).catch(()=>{});
+      document.getElementById('notifList').innerHTML =
+        '<div class="notif-empty"><i class="fas fa-bell-slash"></i>Sin notificaciones</div>';
+    })
+    .catch(() => {});
 }
 
 function getCsrf() {

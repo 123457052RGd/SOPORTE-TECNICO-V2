@@ -1,29 +1,49 @@
 """
 DAO para gestión de tickets - MySQL
 BD: equipos_dif
+Coloca este archivo en: dao/ticket_dao.py
 
 FIXES:
   - _notif con id_usuario=None ahora notifica a TODOS los técnicos/admins activos
-    en lugar de insertar una fila con NULL (que nadie recibe con polling por user_id)
   - asignar_tecnico: refresca el ticket DESPUÉS del UPDATE para tener nombre_tecnico correcto
-  - Notificaciones al usuario usan url correcta /user/ticket/ (no /mis-tickets/)
+  - Notificaciones al usuario usan url correcta /user/ticket/
+  - obtener_estadisticas(periodo=) y obtener_todos(periodo=) aceptan
+    'hoy' | 'semana' | 'mes' | 'año' | None (= todos)
 """
 from dao.base_dao import BaseDAO
 from config.database_mysql import now_mx
 
 
 # ──────────────────────────────────────────────
+# HELPER: filtro por período
+# ──────────────────────────────────────────────
+def _where_periodo(periodo, tabla_alias='t'):
+    """
+    Retorna (clause_sql, params_tuple).
+    clause_sql ya empieza con AND, o '' si no hay filtro.
+    Úsalo así:
+        clause, params = _where_periodo(periodo)
+        sql = f"SELECT ... FROM tickets t WHERE 1=1 {clause} ..."
+        BaseDAO.execute_query(sql, params or None, ...)
+    """
+    col = f"{tabla_alias}.fecha_creacion"
+    if periodo == 'hoy':
+        return f" AND DATE({col}) = CURDATE()", ()
+    elif periodo == 'semana':
+        return f" AND YEARWEEK({col}, 1) = YEARWEEK(CURDATE(), 1)", ()
+    elif periodo == 'mes':
+        return f" AND YEAR({col}) = YEAR(CURDATE()) AND MONTH({col}) = MONTH(CURDATE())", ()
+    elif periodo == 'año':
+        return f" AND YEAR({col}) = YEAR(CURDATE())", ()
+    return "", ()
+
+
+# ──────────────────────────────────────────────
 # HELPER INTERNO: insertar notificación
 # ──────────────────────────────────────────────
-def _notif(titulo, mensaje, tipo='info', id_usuario=None, url=None, id_ticket=None):
-    """
-    FIX: Si id_usuario=None → notifica a TODOS los técnicos activos
-         (antes insertaba NULL y nadie lo recibía en el polling por user_id)
-    Si id_usuario=int → solo para ese usuario
-    """
+def _notif(titulo, mensaje, tipo='info', id_usuario=None, url=None, id_ticket=None, solo_tecnicos=False):
     try:
-        if id_usuario is None:
-            # Notificar a todos los técnicos/admins activos
+        if id_usuario is None and solo_tecnicos:
             tecnicos = BaseDAO.execute_query(
                 "SELECT id_tecnico FROM tecnicos WHERE activo = 1",
                 fetch_all=True
@@ -31,21 +51,47 @@ def _notif(titulo, mensaje, tipo='info', id_usuario=None, url=None, id_ticket=No
             for tec in tecnicos:
                 BaseDAO.execute_query(
                     """INSERT INTO notificaciones
-                           (id_ticket, id_usuario, tipo, titulo, mensaje, leida, url_accion, fecha_creacion)
-                       VALUES (%s, %s, %s, %s, %s, 0, %s, %s)""",
+                           (id_ticket, id_usuario, tipo_destinatario, tipo,
+                            titulo, mensaje, leida, url_accion, fecha_creacion)
+                       VALUES (%s, %s, 'tecnico', %s, %s, %s, 0, %s, %s)""",
                     (id_ticket, tec['id_tecnico'], tipo, titulo, mensaje, url, now_mx()),
                     commit=True
                 )
         else:
             BaseDAO.execute_query(
                 """INSERT INTO notificaciones
-                       (id_ticket, id_usuario, tipo, titulo, mensaje, leida, url_accion, fecha_creacion)
-                   VALUES (%s, %s, %s, %s, %s, 0, %s, %s)""",
+                       (id_ticket, id_usuario, tipo_destinatario, tipo,
+                        titulo, mensaje, leida, url_accion, fecha_creacion)
+                   VALUES (%s, %s, 'usuario', %s, %s, %s, 0, %s, %s)""",
                 (id_ticket, id_usuario, tipo, titulo, mensaje, url, now_mx()),
                 commit=True
             )
-    except Exception as e:
-        print(f'[Notif] Error al insertar: {e}')
+    except Exception:
+        # Fallback: si la columna tipo_destinatario no existe
+        try:
+            if id_usuario is None:
+                tecnicos = BaseDAO.execute_query(
+                    "SELECT id_tecnico FROM tecnicos WHERE activo = 1",
+                    fetch_all=True
+                ) or []
+                for tec in tecnicos:
+                    BaseDAO.execute_query(
+                        """INSERT INTO notificaciones
+                               (id_ticket, id_usuario, tipo, titulo, mensaje, leida, url_accion, fecha_creacion)
+                           VALUES (%s, %s, %s, %s, %s, 0, %s, %s)""",
+                        (id_ticket, tec['id_tecnico'], tipo, titulo, mensaje, url, now_mx()),
+                        commit=True
+                    )
+            else:
+                BaseDAO.execute_query(
+                    """INSERT INTO notificaciones
+                           (id_ticket, id_usuario, tipo, titulo, mensaje, leida, url_accion, fecha_creacion)
+                       VALUES (%s, %s, %s, %s, %s, 0, %s, %s)""",
+                    (id_ticket, id_usuario, tipo, titulo, mensaje, url, now_mx()),
+                    commit=True
+                )
+        except Exception as e2:
+            print(f'[Notif] Error al insertar: {e2}')
 
 
 class TicketDAO(BaseDAO):
@@ -84,8 +130,8 @@ class TicketDAO(BaseDAO):
             )
             id_ticket = row['id_ticket'] if row else None
             if id_ticket:
-                # FIX: id_usuario=None → llega a TODOS los técnicos
                 _notif(
+                    solo_tecnicos=True,
                     titulo=f'Nuevo ticket {folio}',
                     mensaje=f'Se creó un nuevo ticket de soporte: {ticket.titulo[:80]}',
                     tipo='nuevo_ticket',
@@ -103,10 +149,16 @@ class TicketDAO(BaseDAO):
                       u.nombre AS nombre_usuario,
                       u.area   AS area_usuario,
                       u.email  AS email_usuario,
-                      CONCAT(tec.nombre,' ',tec.apellido) AS nombre_tecnico
+                      CONCAT(tec.nombre,' ',tec.apellido) AS nombre_tecnico,
+                      tec.email AS email_tecnico,
+                      tp.nombre  AS tipo_problema,
+                      e.nombre_responsable AS nombre_equipo,
+                      e.num_inventario AS num_inventario_equipo
                FROM tickets t
-               LEFT JOIN usuarios  u   ON t.id_usuario = u.id
-               LEFT JOIN tecnicos  tec ON t.id_tecnico  = tec.id_tecnico
+               LEFT JOIN usuarios      u   ON t.id_usuario       = u.id
+               LEFT JOIN tecnicos      tec ON t.id_tecnico        = tec.id_tecnico
+               LEFT JOIN tipos_problema tp ON t.id_tipo_problema  = tp.id_tipo
+               LEFT JOIN equipos       e   ON t.id_equipo         = e.id_equipo
                WHERE t.id_ticket = %s""",
             (id_ticket,), fetch_one=True
         )
@@ -121,16 +173,23 @@ class TicketDAO(BaseDAO):
         return row
 
     @staticmethod
-    def obtener_todos():
+    def obtener_todos(periodo=None):
+        """
+        Devuelve todos los tickets.
+        periodo: None=todos | 'hoy' | 'semana' | 'mes' | 'año'
+        """
+        clause, params = _where_periodo(periodo)
         rows = BaseDAO.execute_query(
-            """SELECT t.*,
+            f"""SELECT t.*,
                       u.nombre AS nombre_usuario,
                       u.area   AS area_usuario,
                       CONCAT(tec.nombre,' ',tec.apellido) AS nombre_tecnico
                FROM tickets t
                LEFT JOIN usuarios  u   ON t.id_usuario = u.id
                LEFT JOIN tecnicos  tec ON t.id_tecnico  = tec.id_tecnico
+               WHERE 1=1 {clause}
                ORDER BY t.fecha_creacion DESC""",
+            params if params else None,
             fetch_all=True
         ) or []
         colores_estado    = {'Abierto':'#3b82f6','En Proceso':'#f59e0b','Resuelto':'#22c55e','Cerrado':'#94a3b8'}
@@ -167,12 +226,10 @@ class TicketDAO(BaseDAO):
             (estado, id_ticket), commit=True
         )
         HistorialDAO.agregar_registro(id_ticket, id_usuario, 'Cambio de estado', f'Estado: {estado}')
-
-        # FIX: refrescar ticket DESPUÉS del UPDATE para datos actualizados
         ticket = TicketDAO.obtener_por_id(id_ticket)
         if ticket:
-            # Notificación a todos los técnicos
             _notif(
+                solo_tecnicos=True,
                 titulo=f'Estado actualizado — {ticket.get("folio","")}',
                 mensaje=f'{ticket.get("titulo","")[:60]}. Estado: {estado}',
                 tipo='actualizacion',
@@ -180,14 +237,14 @@ class TicketDAO(BaseDAO):
                 url=f'/admin/ticket/{id_ticket}',
                 id_ticket=id_ticket
             )
-            # Notificación al usuario dueño del ticket
             if ticket.get('id_usuario'):
                 _notif(
+                    solo_tecnicos=True,
                     titulo=f'Tu ticket {ticket.get("folio","")} fue actualizado',
                     mensaje=f'El estado de tu ticket cambio a: {estado}',
                     tipo='actualizacion',
                     id_usuario=ticket['id_usuario'],
-                    url=f'/user/ticket/{id_ticket}',   # FIX: url correcta
+                    url=f'/user/ticket/{id_ticket}',
                     id_ticket=id_ticket
                 )
         return True
@@ -201,13 +258,11 @@ class TicketDAO(BaseDAO):
             (id_tecnico, now_mx(), id_ticket), commit=True
         )
         HistorialDAO.agregar_registro(id_ticket, id_usuario, 'Asignación', 'Técnico asignado')
-
-        # FIX: obtener ticket DESPUÉS del UPDATE — así nombre_tecnico ya está actualizado
         ticket = TicketDAO.obtener_por_id(id_ticket)
         if ticket:
             nombre_tec = ticket.get('nombre_tecnico') or 'técnico'
-            # Notif a todos los técnicos (panel admin)
             _notif(
+                solo_tecnicos=True,
                 titulo=f'Ticket asignado - {ticket.get("folio","")}',
                 mensaje=f'{ticket.get("titulo","")[:60]} asignado a {nombre_tec}',
                 tipo='asignacion',
@@ -215,14 +270,14 @@ class TicketDAO(BaseDAO):
                 url=f'/admin/ticket/{id_ticket}',
                 id_ticket=id_ticket
             )
-            # Notif al usuario dueño
             if ticket.get('id_usuario'):
                 _notif(
+                    solo_tecnicos=True,
                     titulo=f'Tu ticket {ticket.get("folio","")} fue asignado',
                     mensaje=f'El técnico {nombre_tec} atenderá tu solicitud',
                     tipo='asignacion',
                     id_usuario=ticket['id_usuario'],
-                    url=f'/user/ticket/{id_ticket}',   # FIX: url correcta
+                    url=f'/user/ticket/{id_ticket}',
                     id_ticket=id_ticket
                 )
         return True
@@ -237,10 +292,10 @@ class TicketDAO(BaseDAO):
             (solucion, observaciones or '', now_mx(), id_ticket), commit=True
         )
         HistorialDAO.agregar_registro(id_ticket, id_usuario, 'Resuelto', 'Solución agregada')
-
         ticket = TicketDAO.obtener_por_id(id_ticket)
         if ticket:
             _notif(
+                solo_tecnicos=True,
                 titulo=f'Ticket resuelto - {ticket.get("folio","")}',
                 mensaje=f'{ticket.get("titulo","")[:60]} fue marcado como Resuelto',
                 tipo='resolucion',
@@ -250,11 +305,12 @@ class TicketDAO(BaseDAO):
             )
             if ticket.get('id_usuario'):
                 _notif(
+                    solo_tecnicos=True,
                     titulo=f'Tu ticket {ticket.get("folio","")} fue resuelto',
                     mensaje='Solución aplicada correctamente.',
                     tipo='resolucion',
                     id_usuario=ticket['id_usuario'],
-                    url=f'/user/ticket/{id_ticket}',   # FIX: url correcta
+                    url=f'/user/ticket/{id_ticket}',
                     id_ticket=id_ticket
                 )
         return True
@@ -266,10 +322,10 @@ class TicketDAO(BaseDAO):
             (now_mx(), id_ticket), commit=True
         )
         HistorialDAO.agregar_registro(id_ticket, id_usuario, 'Cerrado', 'Ticket cerrado')
-
         ticket = TicketDAO.obtener_por_id(id_ticket)
         if ticket:
             _notif(
+                solo_tecnicos=True,
                 titulo=f'Ticket cerrado - {ticket.get("folio","")}',
                 mensaje=f'{ticket.get("titulo","")[:60]} fue cerrado',
                 tipo='actualizacion',
@@ -279,27 +335,41 @@ class TicketDAO(BaseDAO):
             )
             if ticket.get('id_usuario'):
                 _notif(
+                    solo_tecnicos=True,
                     titulo=f'Tu ticket {ticket.get("folio","")} fue cerrado',
                     mensaje='El ticket ha sido cerrado. Si necesitas más ayuda, crea uno nuevo.',
                     tipo='actualizacion',
                     id_usuario=ticket['id_usuario'],
-                    url=f'/user/ticket/{id_ticket}',   # FIX: url correcta
+                    url=f'/user/ticket/{id_ticket}',
                     id_ticket=id_ticket
                 )
         return True
 
     @staticmethod
-    def obtener_estadisticas():
+    def obtener_estadisticas(periodo=None):
+        """
+        Devuelve estadísticas de tickets.
+        periodo: None=todos | 'hoy' | 'semana' | 'mes' | 'año'
+        """
+        clause, params = _where_periodo(periodo)
+        p = params if params else None
         stats = {}
+        stats['periodo'] = periodo or 'todos'
 
-        r = BaseDAO.execute_query('SELECT COUNT(*) AS total FROM tickets', fetch_one=True)
+        # Total
+        r = BaseDAO.execute_query(
+            f'SELECT COUNT(*) AS total FROM tickets t WHERE 1=1 {clause}',
+            p, fetch_one=True
+        )
         stats['total'] = r['total'] if r else 0
 
+        # Por estado
         estados_raw = BaseDAO.execute_query(
-            """SELECT estado AS nombre, COUNT(*) AS cantidad FROM tickets
+            f"""SELECT estado AS nombre, COUNT(*) AS cantidad FROM tickets t
+               WHERE 1=1 {clause}
                GROUP BY estado
                ORDER BY FIELD(estado,'Abierto','En Proceso','Resuelto','Cerrado')""",
-            fetch_all=True
+            p, fetch_all=True
         ) or []
         colores_estado = {
             'Abierto':    '#3b82f6',
@@ -311,11 +381,13 @@ class TicketDAO(BaseDAO):
             e['color'] = colores_estado.get(e['nombre'], '#94a3b8')
         stats['por_estado'] = estados_raw
 
+        # Por prioridad
         prioridades_raw = BaseDAO.execute_query(
-            """SELECT prioridad AS nombre, COUNT(*) AS cantidad FROM tickets
+            f"""SELECT prioridad AS nombre, COUNT(*) AS cantidad FROM tickets t
+               WHERE 1=1 {clause}
                GROUP BY prioridad
                ORDER BY FIELD(prioridad,'Baja','Media','Alta','Crítica')""",
-            fetch_all=True
+            p, fetch_all=True
         ) or []
         colores_prioridad = {
             'Baja':    '#22c55e',
@@ -323,33 +395,34 @@ class TicketDAO(BaseDAO):
             'Alta':    '#f97316',
             'Crítica': '#ef4444'
         }
-        for p in prioridades_raw:
-            p['color'] = colores_prioridad.get(p['nombre'], '#94a3b8')
+        for pr in prioridades_raw:
+            pr['color'] = colores_prioridad.get(pr['nombre'], '#94a3b8')
         stats['por_prioridad'] = prioridades_raw
 
+        # Por tipo de problema
         por_tipo = BaseDAO.execute_query(
-            """SELECT
+            f"""SELECT
                  COALESCE(tp.nombre, CONCAT('Tipo #', t.id_tipo_problema)) AS nombre,
                  COUNT(*) AS cantidad
                FROM tickets t
                LEFT JOIN tipos_problema tp ON t.id_tipo_problema = tp.id_tipo
-               WHERE t.id_tipo_problema IS NOT NULL
+               WHERE t.id_tipo_problema IS NOT NULL {clause}
                GROUP BY t.id_tipo_problema, tp.nombre
                ORDER BY cantidad DESC
                LIMIT 10""",
-            fetch_all=True
+            p, fetch_all=True
         )
         if por_tipo is None:
             por_tipo = BaseDAO.execute_query(
-                """SELECT id_tipo_problema AS nombre, COUNT(*) AS cantidad
-                   FROM tickets WHERE id_tipo_problema IS NOT NULL
+                f"""SELECT id_tipo_problema AS nombre, COUNT(*) AS cantidad
+                   FROM tickets t WHERE id_tipo_problema IS NOT NULL {clause}
                    GROUP BY id_tipo_problema ORDER BY cantidad DESC LIMIT 10""",
-                fetch_all=True
+                p, fetch_all=True
             ) or []
-            for p in por_tipo:
-                v = p.get('nombre')
+            for pt in por_tipo:
+                v = pt.get('nombre')
                 if isinstance(v, int) or (isinstance(v, str) and v.isdigit()):
-                    p['nombre'] = f'Tipo #{v}'
+                    pt['nombre'] = f'Tipo #{v}'
 
         stats['por_tipo'] = por_tipo or []
         return stats

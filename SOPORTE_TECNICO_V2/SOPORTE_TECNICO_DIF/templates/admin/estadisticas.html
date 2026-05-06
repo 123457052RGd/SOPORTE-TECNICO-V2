@@ -35,9 +35,20 @@ body{background:var(--page-bg)!important}
 
   <div class="est-hdr">
     <h1 class="est-title"><i class="fas fa-chart-bar"></i>Estadísticas y Análisis</h1>
-    <a href="{{ url_for('admin.exportar_reporte', formato='json') }}" class="btn-export">
-      <i class="fas fa-download"></i> Exportar JSON
-    </a>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a href="{{ url_for('admin.exportar_reporte', formato='csv') }}" class="btn-export" style="background:#22c55e">
+        <i class="fas fa-file-csv"></i> CSV
+      </a>
+      <a href="{{ url_for('admin.exportar_reporte', formato='pdf') }}" class="btn-export" style="background:#ef4444" target="_blank">
+        <i class="fas fa-file-pdf"></i> PDF
+      </a>
+      <a href="{{ url_for('admin.exportar_reporte', formato='word') }}" class="btn-export" style="background:#2563eb">
+        <i class="fas fa-file-word"></i> Word
+      </a>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn-export" style="background:#64748b">
+        <i class="fas fa-home"></i> Inicio
+      </a>
+    </div>
   </div>
 
   <!-- Resumen -->

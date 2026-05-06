@@ -16,3 +16,6 @@ blinker==1.7.0
 colorama==0.4.6
 greenlet==3.0.3
 typing-extensions==4.10.0
+python-docx==0.8.11
+reportlab==3.6.12
+Flask-WTF==1.1.1

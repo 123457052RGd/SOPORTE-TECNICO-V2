@@ -250,6 +250,15 @@ class TicketDAO(BaseDAO):
         return True
 
     @staticmethod
+    def actualizar_prioridad(id_ticket, prioridad, id_usuario):
+        BaseDAO.execute_query(
+            'UPDATE tickets SET prioridad = %s WHERE id_ticket = %s',
+            (prioridad, id_ticket), commit=True
+        )
+        HistorialDAO.agregar_registro(id_ticket, id_usuario, 'Cambio de prioridad', f'Prioridad: {prioridad}')
+        return True
+
+    @staticmethod
     def asignar_tecnico(id_ticket, id_tecnico, id_usuario):
         BaseDAO.execute_query(
             """UPDATE tickets

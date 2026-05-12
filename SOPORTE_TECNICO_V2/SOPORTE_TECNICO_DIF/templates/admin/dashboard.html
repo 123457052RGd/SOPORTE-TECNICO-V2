@@ -411,7 +411,7 @@ body::before {
               </td>
               <td style="font-size:12px">
                 {% if ticket.nombre_tecnico %}
-                  <span style="background:#f0fdf4;color:#15803d;padding:4px 10px;border-radius:7px;font-weight:700;font-size:12px;border:1px solid #bbf7d0">
+                  <span style="background:#f0fdf4;color:#15803d;padding:4px 10px;border-radius:7px;font-weight:700;font-size:11px;border:1px solid #bbf7d0;display:inline-block;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;" title="{{ ticket.nombre_tecnico }}">
                     {{ ticket.nombre_tecnico }}
                   </span>
                 {% else %}
@@ -616,4 +616,4 @@ document.addEventListener("DOMContentLoaded", function () {
   setInterval(()=>{ refrescarTecnicos(); refrescarStats(); }, 30000);
 });
 </script>
-{% endblock %} 
+{% endblock %}

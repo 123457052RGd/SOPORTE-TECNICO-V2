@@ -81,9 +81,9 @@ def test_email():
             'nombre_tecnico': 'Tecnico DIF'
         }
         email_notif.enviar_ticket_creado(ticket_prueba, ADMIN_EMAIL)
-        return f'✅ Email enviado correctamente a {ADMIN_EMAIL}'
+        return f' Email enviado correctamente a {ADMIN_EMAIL}'
     except Exception as e:
-        return f'❌ Error: {str(e)}'
+        return f' Error: {str(e)}'
 
 
 # ── Manejo de sesión expirada ─────────────────────────────────
@@ -101,7 +101,7 @@ def verificar_sesion():
     if 'user_id' not in session:
         return
 
-    # 💡 SUGERIR CAMBIO DE CONTRASEÑA (solo aviso, no bloquea el sistema)
+    #  SUGERIR CAMBIO DE CONTRASEÑA (solo aviso, no bloquea el sistema)
     # El usuario puede navegar con normalidad, el mensaje aparece una sola vez
     if session.get('primer_login'):
         flash(

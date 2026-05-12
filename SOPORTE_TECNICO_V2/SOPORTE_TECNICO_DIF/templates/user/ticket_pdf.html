@@ -4,170 +4,288 @@
   <meta charset="UTF-8">
   <title>Ticket {{ ticket.folio }}</title>
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#1e293b;background:#fff;padding:30px}
-    .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0d9488;padding-bottom:14px;margin-bottom:20px}
-    .header-left .org{font-size:18px;font-weight:700;color:#0d9488}
-    .header-left .sub{font-size:11px;color:#64748b;margin-top:2px}
-    .header-right{text-align:right}
-    .folio{font-size:20px;font-weight:800;color:#0f766e;font-family:monospace}
-    .folio-lbl{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px}
-    .section{margin-bottom:18px}
-    .section-title{font-size:11px;font-weight:700;color:#0d9488;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0;padding-bottom:5px;margin-bottom:10px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-bottom:12px}
-    .field-lbl{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
-    .field-val{font-size:12px;color:#1e293b;font-weight:500}
-    .badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;color:#fff}
-    .desc-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px 12px;font-size:12px;line-height:1.6;white-space:pre-wrap;color:#1e293b}
-    .solucion-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px 12px;font-size:12px;line-height:1.6;white-space:pre-wrap;color:#1e293b}
-    .hist-table{width:100%;border-collapse:collapse;font-size:11px}
-    .hist-table th{text-align:left;padding:6px 10px;background:#f1f5f9;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e2e8f0}
-    .hist-table td{padding:6px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top}
-    .hist-table tr:last-child td{border-bottom:none}
-    .footer{margin-top:30px;border-top:1px solid #e2e8f0;padding-top:10px;text-align:center;font-size:10px;color:#94a3b8}
-    @media print{
-      body{padding:15px}
-      @page{margin:1cm;size:A4}
+    @page { size: A4; margin: 1.8cm 1.5cm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 11px;
+           color: #1e293b; background: #fff; }
+
+    /* ── ENCABEZADO ── */
+    .hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 3px solid #0d9488; padding-bottom: 14px; margin-bottom: 18px;
     }
-    /* Auto print si se abre como HTML */
+    .hdr-logos { display: flex; align-items: center; gap: 14px; }
+    .hdr-logos img { height: 54px; width: auto; object-fit: contain; }
+    .hdr-divider { width: 1px; height: 44px; background: #cbd5e1; }
+    .hdr-info { }
+    .hdr-org  { font-size: 15px; font-weight: 800; color: #0d9488; line-height: 1.2; }
+    .hdr-sub  { font-size: 9.5px; color: #64748b; margin-top: 2px; }
+    .hdr-right { text-align: right; }
+    .hdr-folio-lbl { font-size: 9px; color: #94a3b8; text-transform: uppercase;
+                     letter-spacing: .6px; font-weight: 700; }
+    .hdr-folio { font-family: monospace; font-size: 20px; font-weight: 800;
+                 color: #0f766e; letter-spacing: 1px; }
+    .hdr-fecha { font-size: 9px; color: #64748b; margin-top: 4px; }
+
+    /* ── WATERMARK ── */
+    .watermark {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-30deg);
+      font-size: 72px; font-weight: 900; color: rgba(13,148,136,.045);
+      text-transform: uppercase; letter-spacing: 8px; pointer-events: none;
+      white-space: nowrap; z-index: 0;
+    }
+
+    /* ── SECCIÓN ── */
+    .sec { border: 1px solid #e2e8f0; border-radius: 8px;
+           overflow: hidden; margin-bottom: 12px; }
+    .sec-hdr { background: #f8fafc; padding: 7px 13px; border-bottom: 1px solid #e2e8f0;
+               font-size: 9.5px; font-weight: 800; color: #475569;
+               text-transform: uppercase; letter-spacing: .5px;
+               display: flex; align-items: center; gap: 6px; }
+    .sec-hdr::before { content: ""; display: inline-block; width: 3px; height: 12px;
+                       background: #0d9488; border-radius: 2px; }
+    .sec-body { padding: 13px; }
+
+    /* ── GRID ── */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px 18px; }
+    .field label { font-size: 8.5px; font-weight: 700; color: #94a3b8;
+                   text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 3px; }
+    .field .val  { font-size: 11.5px; color: #1e293b; font-weight: 500; }
+
+    /* ── BADGES ── */
+    .badge { display: inline-block; padding: 3px 11px; border-radius: 20px;
+             font-size: 10px; font-weight: 700; color: #fff; }
+
+    /* ── DESCRIPCIÓN ── */
+    .desc-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+                padding: 10px 12px; font-size: 11px; line-height: 1.7;
+                white-space: pre-wrap; color: #334155; }
+
+    /* ── SOLUCIÓN ── */
+    .sol-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;
+               padding: 10px 12px; font-size: 11px; line-height: 1.7; white-space: pre-wrap; }
+    .sol-hdr  { background: #dcfce7 !important; border-bottom-color: #bbf7d0 !important; }
+    .sol-hdr::before { background: #16a34a !important; }
+
+    /* ── TABLA HISTORIAL ── */
+    .hist-tbl { width: 100%; border-collapse: collapse; font-size: 10px; }
+    .hist-tbl th { background: #1e293b; color: #94a3b8; font-size: 8.5px; font-weight: 700;
+                   text-transform: uppercase; letter-spacing: .4px; padding: 7px 10px;
+                   text-align: left; }
+    .hist-tbl td { padding: 6px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    .hist-tbl tr:last-child td { border-bottom: none; }
+    .hist-tbl tr:nth-child(even) td { background: #f8fafc; }
+
+    /* ── FIRMA ── */
+    .firma-row { display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+                 margin-top: 8px; }
+    .firma-box { border-top: 1px solid #94a3b8; padding-top: 6px; text-align: center;
+                 font-size: 9px; color: #64748b; }
+
+    /* ── FOOTER ── */
+    .footer { border-top: 2px solid #e2e8f0; margin-top: 16px; padding-top: 8px;
+              display: flex; justify-content: space-between; align-items: center; }
+    .footer-left  { font-size: 8.5px; color: #94a3b8; }
+    .footer-center { font-size: 9px; color: #0d9488; font-weight: 700; }
+    .footer-right  { font-size: 8.5px; color: #94a3b8; text-align: right; }
+
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- Encabezado -->
-  <div class="header">
-    <div class="header-left">
-      <div class="org">ITIL Helpdesk - DIF</div>
-      <div class="sub">Sistema de Soporte Tecnico</div>
-      <div class="sub" style="margin-top:6px">Reporte generado: {{ ticket.fecha_creacion[:10] if ticket.fecha_creacion else '' }}</div>
-    </div>
-    <div class="header-right">
-      <div class="folio-lbl">Numero de Ticket</div>
-      <div class="folio">{{ ticket.folio }}</div>
+<div class="watermark">DIF</div>
+
+<!-- ENCABEZADO -->
+<div class="hdr">
+  <div class="hdr-logos">
+    <img src="data:image/png;base64,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" alt="IITIL Helpdesk">
+    <div class="hdr-divider"></div>
+    <div class="hdr-info">
+      <div class="hdr-org">ITIL Helpdesk — DIF El Márques</div>
+      <div class="hdr-sub">Sistema de Soporte Técnico · Departamento de Informática</div>
+      <div class="hdr-sub" style="margin-top:3px">
+        Reporte emitido: {{ ticket.fecha_creacion[:10] if ticket.fecha_creacion else '' }}
+      </div>
     </div>
   </div>
+  <div class="hdr-right">
+    <div class="hdr-folio-lbl">N° de Ticket</div>
+    <div class="hdr-folio">{{ ticket.folio }}</div>
+    <div class="hdr-fecha">
+      {% if ticket.estado == 'Cerrado' or ticket.estado == 'Resuelto' %}
+        <span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:20px;font-weight:700;font-size:9px">
+          ✓ {{ ticket.estado }}
+        </span>
+      {% else %}
+        <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:20px;font-weight:700;font-size:9px">
+          ● {{ ticket.estado }}
+        </span>
+      {% endif %}
+    </div>
+  </div>
+</div>
 
-  <!-- Estado y prioridad -->
-  <div class="section">
-    <div class="section-title">Resumen</div>
-    <div class="grid">
-      <div>
-        <div class="field-lbl">Estado</div>
-        <span class="badge" style="background:{{ ticket.color_estado }}">{{ ticket.estado }}</span>
+<!-- RESUMEN -->
+<div class="sec">
+  <div class="sec-hdr">Resumen del Ticket</div>
+  <div class="sec-body">
+    <div class="grid3" style="margin-bottom:10px">
+      <div class="field">
+        <label>Estado</label>
+        <div class="val">
+          <span class="badge" style="background:{{ ticket.color_estado }}">{{ ticket.estado }}</span>
+        </div>
       </div>
-      <div>
-        <div class="field-lbl">Prioridad</div>
-        <span class="badge" style="background:{{ ticket.color_prioridad }}">{{ ticket.prioridad }}</span>
+      <div class="field">
+        <label>Prioridad</label>
+        <div class="val">
+          <span class="badge" style="background:{{ ticket.color_prioridad }}">{{ ticket.prioridad }}</span>
+        </div>
       </div>
-      <div>
-        <div class="field-lbl">Fecha de Creacion</div>
-        <div class="field-val">{{ ticket.fecha_creacion }}</div>
+      <div class="field">
+        <label>Tipo de Problema</label>
+        <div class="val">{{ ticket.tipo_problema or '—' }}</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Fecha de Creación</label>
+        <div class="val">{{ ticket.fecha_creacion }}</div>
       </div>
       {% if ticket.fecha_resolucion %}
-      <div>
-        <div class="field-lbl">Fecha de Resolucion</div>
-        <div class="field-val">{{ ticket.fecha_resolucion }}</div>
+      <div class="field">
+        <label>Fecha de Resolución</label>
+        <div class="val">{{ ticket.fecha_resolucion }}</div>
       </div>
       {% endif %}
     </div>
   </div>
+</div>
 
-  <!-- Detalle -->
-  <div class="section">
-    <div class="section-title">Detalle del Problema</div>
-    <div class="grid" style="margin-bottom:10px">
-      <div>
-        <div class="field-lbl">Reportado por</div>
-        <div class="field-val">{{ ticket.nombre_usuario or 'N/A' }}</div>
+<!-- USUARIO Y TÉCNICO -->
+<div class="sec">
+  <div class="sec-hdr">Partes Involucradas</div>
+  <div class="sec-body">
+    <div class="grid2">
+      <div class="field">
+        <label>Reportado por</label>
+        <div class="val" style="font-weight:700">{{ ticket.nombre_usuario or '—' }}</div>
+        <div style="font-size:9.5px;color:#64748b;margin-top:2px">
+          {% if ticket.email_usuario %}{{ ticket.email_usuario }}{% endif %}
+        </div>
+        <div style="font-size:9.5px;color:#64748b">{{ ticket.area_usuario or '' }}</div>
       </div>
-      <div>
-        <div class="field-lbl">Area</div>
-        <div class="field-val">{{ ticket.area_usuario or 'N/A' }}</div>
+      <div class="field">
+        <label>Técnico Asignado</label>
+        {% if ticket.nombre_tecnico %}
+          <div class="val" style="font-weight:700">{{ ticket.nombre_tecnico }}</div>
+          <div style="font-size:9.5px;color:#64748b;margin-top:2px">Soporte Técnico — Informática</div>
+        {% else %}
+          <div class="val" style="color:#94a3b8">Sin asignar</div>
+        {% endif %}
       </div>
-      <div>
-        <div class="field-lbl">Tipo de Problema</div>
-        <div class="field-val">{{ ticket.tipo_problema or 'No especificado' }}</div>
-      </div>
-      <div>
-        <div class="field-lbl">Equipo Afectado</div>
-        <div class="field-val">{{ ticket.nombre_equipo or 'No especificado' }}</div>
-      </div>
-      {% if ticket.nombre_tecnico %}
-      <div>
-        <div class="field-lbl">Tecnico Asignado</div>
-        <div class="field-val">{{ ticket.nombre_tecnico }}</div>
-      </div>
-      {% endif %}
     </div>
-    <div style="margin-bottom:6px">
-      <div class="field-lbl">Titulo</div>
-      <div class="field-val" style="font-size:13px;font-weight:700;margin-top:2px">{{ ticket.titulo }}</div>
-    </div>
-    <div style="margin-top:10px">
-      <div class="field-lbl" style="margin-bottom:5px">Descripcion</div>
-      <div class="desc-box">{{ ticket.descripcion }}</div>
-    </div>
-  </div>
-
-  <!-- Solucion -->
-  {% if ticket.solucion %}
-  <div class="section">
-    <div class="section-title" style="color:#16a34a;border-color:#bbf7d0">Solucion Aplicada</div>
-    <div class="solucion-box">{{ ticket.solucion }}</div>
-    {% if ticket.observaciones_tecnico %}
-    <div style="margin-top:10px">
-      <div class="field-lbl">Observaciones del Tecnico</div>
-      <div class="desc-box" style="margin-top:4px">{{ ticket.observaciones_tecnico }}</div>
+    {% if ticket.nombre_equipo %}
+    <div class="field" style="margin-top:10px">
+      <label>Equipo Afectado</label>
+      <div class="val">{{ ticket.nombre_equipo }}</div>
     </div>
     {% endif %}
   </div>
-  {% endif %}
+</div>
 
-  <!-- Historial -->
-  {% if historial %}
-  <div class="section">
-    <div class="section-title">Historial de Actividad</div>
-    <table class="hist-table">
+<!-- DESCRIPCIÓN -->
+<div class="sec">
+  <div class="sec-hdr">Descripción del Problema</div>
+  <div class="sec-body">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">{{ ticket.titulo }}</div>
+    <div class="desc-box">{{ ticket.descripcion }}</div>
+  </div>
+</div>
+
+<!-- SOLUCIÓN -->
+{% if ticket.solucion %}
+<div class="sec">
+  <div class="sec-hdr sol-hdr">Solución Aplicada</div>
+  <div class="sec-body">
+    {% if ticket.nombre_tecnico %}
+    <div style="font-size:9.5px;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;
+                border-radius:5px;padding:6px 10px;margin-bottom:10px;font-weight:700">
+      Resuelto por: {{ ticket.nombre_tecnico }}
+      {% if ticket.fecha_resolucion %} — {{ ticket.fecha_resolucion[:16] }}{% endif %}
+    </div>
+    {% endif %}
+    <div class="sol-box">{{ ticket.solucion }}</div>
+    {% if ticket.observaciones_tecnico %}
+    <div style="margin-top:10px">
+      <div style="font-size:8.5px;font-weight:700;color:#94a3b8;text-transform:uppercase;
+                  letter-spacing:.5px;margin-bottom:4px">Observaciones Técnicas</div>
+      <div class="desc-box">{{ ticket.observaciones_tecnico }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- HISTORIAL -->
+{% if historial %}
+<div class="sec">
+  <div class="sec-hdr">Historial de Actividad</div>
+  <div class="sec-body" style="padding:0">
+    <table class="hist-tbl">
       <thead>
         <tr>
-          <th>Fecha</th>
-          <th>Accion</th>
-          <th>Descripcion</th>
-          <th>Usuario</th>
+          <th style="width:130px">Fecha</th>
+          <th style="width:130px">Acción</th>
+          <th>Descripción</th>
+          <th style="width:150px">Responsable</th>
         </tr>
       </thead>
       <tbody>
         {% for h in historial %}
         <tr>
-          <td>{{ h.fecha }}</td>
-          <td><strong>{{ h.accion }}</strong></td>
-          <td>{{ h.descripcion }}</td>
+          <td style="color:#64748b;font-family:monospace">{{ h.fecha }}</td>
+          <td style="font-weight:700">{{ h.accion }}</td>
+          <td style="color:#475569">{{ h.descripcion or '—' }}</td>
           <td>{{ h.nombre_completo }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  {% endif %}
+</div>
+{% endif %}
 
-  <div class="footer">
-    ITIL Helpdesk - Sistema DIF de Soporte Tecnico &copy; 2026 &nbsp;|&nbsp; Documento generado automaticamente
+<!-- FIRMA -->
+<div class="firma-row" style="margin-top:20px">
+  <div class="firma-box">
+    <div style="margin-bottom:30px"></div>
+    Firma del Usuario Solicitante<br>
+    <strong>{{ ticket.nombre_usuario or '' }}</strong>
   </div>
-
-  <script>
-    // Si se sirve como HTML (sin WeasyPrint), abre dialogo de impresion automaticamente
-    if (document.contentType !== 'application/pdf') {
-      window.onload = () => window.print();
-    }
-
-
-
-    <div style="display:flex; justify-content:space-between;">
-    <img src="{{ url_for('static', filename='img/logodif.png') }}" width="120">
-    <img src="{{ url_for('static', filename='img/logo.png') }}" width="120">
+  <div class="firma-box">
+    <div style="margin-bottom:30px"></div>
+    Firma del Técnico Responsable<br>
+    <strong>{{ ticket.nombre_tecnico or 'Sin asignar' }}</strong>
+  </div>
 </div>
 
-<h1 style="text-align:center;">REPORTE DE TICKET</h1>
-  </script>
+<!-- FOOTER -->
+<div class="footer" style="margin-top:14px">
+  <div class="footer-left">
+    ITIL Helpdesk — Sistema DIF de Soporte Técnico © 2026<br>
+    Documento generado automáticamente — No requiere firma digital adicional
+  </div>
+  <div class="footer-center">DIF El Márques · Informática</div>
+  <div class="footer-right">
+    Ticket: {{ ticket.folio }}<br>
+    Estado: {{ ticket.estado }}
+  </div>
+</div>
+
 </body>
 </html>

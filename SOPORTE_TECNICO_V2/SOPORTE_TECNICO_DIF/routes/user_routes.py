@@ -211,19 +211,43 @@ def descargar_ticket_pdf(id_ticket):
     ticket['color_estado']    = _color_estado(ticket.get('estado', ''))
     historial = HistorialDAO.obtener_por_ticket(id_ticket)
 
+    html_str = render_template('user/ticket_pdf.html', ticket=ticket, historial=historial)
+
+    # Intentar weasyprint primero
     try:
         from weasyprint import HTML as WP_HTML
-        html_str  = render_template('user/ticket_pdf.html', ticket=ticket, historial=historial)
         pdf_bytes = WP_HTML(string=html_str, base_url=request.host_url).write_pdf()
         response  = make_response(pdf_bytes)
         response.headers['Content-Type']        = 'application/pdf'
         response.headers['Content-Disposition'] = f'attachment; filename=ticket_{ticket["folio"]}.pdf'
         return response
-    except ImportError:
-        html_str = render_template('user/ticket_pdf.html', ticket=ticket, historial=historial)
-        response = make_response(html_str)
-        response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    except Exception:
+        pass
+
+    # Fallback: pdfkit (wkhtmltopdf)
+    try:
+        import pdfkit, tempfile, os
+        options = {
+            'encoding': 'UTF-8',
+            'quiet': '',
+            'no-outline': None,
+            'margin-top': '10mm', 'margin-bottom': '10mm',
+            'margin-left': '12mm', 'margin-right': '12mm',
+        }
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
+            tmp_path = tmp.name
+        pdfkit.from_string(html_str, tmp_path, options=options)
+        with open(tmp_path, 'rb') as f:
+            pdf_bytes = f.read()
+        os.unlink(tmp_path)
+        response = make_response(pdf_bytes)
+        response.headers['Content-Type']        = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename=ticket_{ticket["folio"]}.pdf'
         return response
+    except Exception as e:
+        current_app.logger.error(f'[PDF] Error generando PDF: {e}')
+        flash(f'No se pudo generar el PDF: {e}', 'danger')
+        return redirect(url_for('user.ver_ticket', id_ticket=id_ticket))
 
 
 # ──────────────────────────────────────────────

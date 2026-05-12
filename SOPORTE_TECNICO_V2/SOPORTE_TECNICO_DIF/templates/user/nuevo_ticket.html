@@ -140,21 +140,14 @@ body{background:var(--page-bg)!important}
           </div>
         </div>
 
-        {# Prioridad #}
-        <div class="nt-card">
-          <div class="nt-card-body">
-            <label class="nt-label">Prioridad <span class="req">*</span></label>
-            <select name="id_prioridad" class="nt-select" required>
-              <option value="">Seleccione una prioridad</option>
-              {% for p in prioridades %}
-                <option value="{{ p.id }}">{{ p.nombre }}</option>
-              {% endfor %}
-            </select>
-            <div style="font-size:11px;color:var(--muted);margin-top:5px">
-              Baja: puede esperar &nbsp;·&nbsp; Media: normal &nbsp;·&nbsp; Alta: urgente &nbsp;·&nbsp; Critica: detiene operaciones
-            </div>
-          </div>
-        </div>
+        {# Prioridad — la asigna el técnico o jefe al atender el ticket
+           Baja: puede esperar sin afectar operaciones
+           Media: requiere atención en el día
+           Alta: afecta la productividad, atención urgente
+           Crítica: detiene completamente las operaciones
+        #}
+        {# Campo oculto con prioridad default "Media" — el técnico la ajustará #}
+        <input type="hidden" name="id_prioridad" value="2">
 
         {# Botones #}
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px">

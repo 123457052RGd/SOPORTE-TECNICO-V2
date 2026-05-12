@@ -199,6 +199,59 @@ def cerrar_ticket(id_ticket):
 
 
 # ──────────────────────────────────────────────
+# DESCARGAR PDF DE TICKET INDIVIDUAL (ADMIN)
+# ──────────────────────────────────────────────
+@admin_bp.route('/ticket/<int:id_ticket>/pdf')
+@admin_required
+def descargar_ticket_pdf(id_ticket):
+    ticket = TicketDAO.obtener_por_id(id_ticket)
+    if not ticket:
+        flash('Ticket no encontrado', 'danger')
+        return redirect(url_for('admin.tickets'))
+
+    ticket = dict(ticket) if not isinstance(ticket, dict) else ticket
+    if ticket.get('fecha_creacion') and not isinstance(ticket['fecha_creacion'], str):
+        ticket['fecha_creacion'] = str(ticket['fecha_creacion'])
+
+    historial = HistorialDAO.obtener_por_ticket(id_ticket)
+    html_str  = render_template('user/ticket_pdf.html', ticket=ticket, historial=historial)
+
+    # Intentar weasyprint
+    try:
+        from weasyprint import HTML as WP_HTML
+        pdf_bytes = WP_HTML(string=html_str, base_url=request.host_url).write_pdf()
+        r = make_response(pdf_bytes)
+        r.headers['Content-Type']        = 'application/pdf'
+        r.headers['Content-Disposition'] = f'attachment; filename=ticket_{ticket["folio"]}.pdf'
+        return r
+    except Exception:
+        pass
+
+    # Fallback pdfkit
+    try:
+        import pdfkit, tempfile, os
+        options = {
+            'encoding': 'UTF-8', 'quiet': '', 'no-outline': None,
+            'margin-top': '10mm', 'margin-bottom': '10mm',
+            'margin-left': '12mm', 'margin-right': '12mm',
+        }
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
+            tmp_path = tmp.name
+        pdfkit.from_string(html_str, tmp_path, options=options)
+        with open(tmp_path, 'rb') as f:
+            pdf_bytes = f.read()
+        os.unlink(tmp_path)
+        r = make_response(pdf_bytes)
+        r.headers['Content-Type']        = 'application/pdf'
+        r.headers['Content-Disposition'] = f'attachment; filename=ticket_{ticket["folio"]}.pdf'
+        return r
+    except Exception as e:
+        current_app.logger.error(f'[PDF Ticket Admin] {e}')
+        flash(f'Error generando PDF: {e}', 'danger')
+        return redirect(url_for('admin.ver_ticket', id_ticket=id_ticket))
+
+
+# ──────────────────────────────────────────────
 # USUARIOS
 # ──────────────────────────────────────────────
 @admin_bp.route('/usuarios')
@@ -471,9 +524,40 @@ def exportar_reporte(formato):
 
     elif formato == 'pdf':
         html_str = ReportesManager.generar_reporte_pdf(stats, lista)
-        r = make_response(html_str)
-        r.headers['Content-Type'] = 'text/html; charset=utf-8'
-        return r
+
+        # Intentar weasyprint
+        try:
+            from weasyprint import HTML as WP_HTML
+            pdf_bytes = WP_HTML(string=html_str, base_url=request.host_url).write_pdf()
+            r = make_response(pdf_bytes)
+            r.headers['Content-Type']        = 'application/pdf'
+            r.headers['Content-Disposition'] = f'attachment; filename=reporte_{etiqueta}_{ahora}.pdf'
+            return r
+        except Exception:
+            pass
+
+        # Fallback pdfkit
+        try:
+            import pdfkit, tempfile, os
+            options = {
+                'encoding': 'UTF-8', 'quiet': '', 'no-outline': None,
+                'margin-top': '10mm', 'margin-bottom': '10mm',
+                'margin-left': '12mm', 'margin-right': '12mm',
+            }
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
+                tmp_path = tmp.name
+            pdfkit.from_string(html_str, tmp_path, options=options)
+            with open(tmp_path, 'rb') as f:
+                pdf_bytes = f.read()
+            os.unlink(tmp_path)
+            r = make_response(pdf_bytes)
+            r.headers['Content-Type']        = 'application/pdf'
+            r.headers['Content-Disposition'] = f'attachment; filename=reporte_{etiqueta}_{ahora}.pdf'
+            return r
+        except Exception as e:
+            current_app.logger.error(f'[PDF Reporte] {e}')
+            flash(f'Error generando PDF: {e}', 'danger')
+            return redirect(url_for('admin.estadisticas'))
 
     elif formato == 'word':
         try:

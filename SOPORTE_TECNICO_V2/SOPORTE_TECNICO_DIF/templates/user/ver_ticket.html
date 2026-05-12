@@ -3,40 +3,61 @@
 
 {% block extra_css %}
 <style>
-:root{--teal:#0d9488;--teal-dk:#0f766e;--teal-lt:#e0fdf4;--slate:#1e293b;--muted:#64748b;--border:#e2e8f0;--surface:#fff;--page-bg:#f1f5f9}
+:root{--teal:#0d9488;--teal-dk:#0f766e;--teal-lt:#e0fdf4;--teal-mid:#99f6e4;--slate:#1e293b;--muted:#64748b;--border:#e2e8f0;--surface:#fff;--page-bg:#f0f4f8}
 body{background:var(--page-bg)!important}
-.tk-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px}
-.tk-title{font-size:20px;font-weight:700;color:var(--slate);display:flex;align-items:center;gap:8px;margin:0}
+
+/* Header página */
+.tk-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:22px;padding-top:4px}
+.tk-title{font-size:21px;font-weight:800;color:var(--slate);display:flex;align-items:center;gap:10px;margin:0;letter-spacing:-.5px}
 .tk-title i{color:var(--teal)}
+.tk-folio{font-size:12px;color:var(--muted);font-family:monospace;background:#f1f5f9;padding:3px 10px;border-radius:8px;border:1px solid var(--border)}
 .tk-actions{display:flex;gap:8px;flex-wrap:wrap}
-.btn-back{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;color:var(--slate);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:500;text-decoration:none;transition:background .15s}
-.btn-back:hover{background:var(--border);color:var(--slate)}
-.btn-pdf{display:inline-flex;align-items:center;gap:6px;background:#ef4444;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;text-decoration:none;transition:background .15s;cursor:pointer}
-.btn-pdf:hover{background:#dc2626;color:#fff}
-.tk-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
-.tk-card-hdr{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--slate);background:#f8fafc}
+
+/* Botones */
+.btn-back{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;color:var(--slate);border:1px solid var(--border);border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;text-decoration:none;transition:all .15s}
+.btn-back:hover{background:var(--border);color:var(--slate);transform:translateY(-1px)}
+.btn-pdf{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:10px;padding:8px 18px;font-size:12px;font-weight:700;text-decoration:none;transition:all .15s;cursor:pointer;box-shadow:0 3px 12px rgba(239,68,68,.35)}
+.btn-pdf:hover{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;transform:translateY(-1px);box-shadow:0 5px 18px rgba(239,68,68,.45)}
+
+/* Cards */
+.tk-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04);transition:box-shadow .2s}
+.tk-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.08)}
+.tk-card-hdr{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--slate);background:linear-gradient(180deg,#f9fbff,var(--surface))}
 .tk-card-hdr i{color:var(--teal);font-size:12px}
-.tk-card-body{padding:18px 16px}
-.tk-field{margin-bottom:14px}
+.tk-card-body{padding:20px 18px}
+
+/* Campos */
+.tk-field{margin-bottom:16px}
 .tk-field:last-child{margin-bottom:0}
-.tk-lbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
-.tk-val{font-size:13px;color:var(--slate)}
-.tk-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.tk-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.tk-val{font-size:13px;color:var(--slate);font-weight:500}
+.tk-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 @media(max-width:600px){.tk-grid{grid-template-columns:1fr}}
-.badge-pill{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;color:#fff;display:inline-block}
+
+/* Badges */
+.badge-pill{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;color:#fff;display:inline-block;letter-spacing:.2px}
+
+/* Layout */
 .layout{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
 @media(max-width:900px){.layout{grid-template-columns:1fr}}
+
 /* Timeline historial */
-.hist-item{display:flex;gap:10px;margin-bottom:14px}
+.hist-item{display:flex;gap:10px;margin-bottom:14px;position:relative}
 .hist-item:last-child{margin-bottom:0}
-.hist-dot{width:10px;height:10px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:4px}
-.hist-body{flex:1;border-left:2px solid var(--border);padding-left:10px;margin-left:-5px}
-.hist-accion{font-size:12px;font-weight:600;color:var(--slate)}
-.hist-desc{font-size:12px;color:var(--muted);margin-top:1px}
-.hist-meta{font-size:11px;color:#94a3b8;margin-top:2px}
-/* Solucion */
+.hist-dot{width:10px;height:10px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:4px;box-shadow:0 0 0 3px var(--teal-lt)}
+.hist-body{flex:1;border-left:2px solid var(--border);padding-left:12px;margin-left:-5px}
+.hist-accion{font-size:12px;font-weight:700;color:var(--slate)}
+.hist-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.hist-meta{font-size:10px;color:#94a3b8;margin-top:3px;font-family:monospace}
+
+/* Solución */
 .solucion-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px}
-.solucion-box .tk-lbl{color:#16a34a}
+
+/* Tip de seguimiento */
+.tip-box{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:12px;padding:14px 16px;margin-top:14px;display:flex;align-items:flex-start;gap:10px}
+.tip-box-icon{width:32px;height:32px;border-radius:9px;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:1px}
+.tip-box-text{font-size:12px;color:#1e40af;line-height:1.6}
+.tip-box-text strong{display:block;font-size:13px;margin-bottom:2px;color:#1d4ed8}
 </style>
 {% endblock %}
 
@@ -44,9 +65,12 @@ body{background:var(--page-bg)!important}
 <div>
 
   <div class="tk-hdr">
-    <h1 class="tk-title">
-      <i class="fas fa-ticket-alt"></i> Ticket {{ ticket.folio }}
-    </h1>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <h1 class="tk-title">
+        <i class="fas fa-ticket-alt"></i> Ticket
+      </h1>
+      <span class="tk-folio">{{ ticket.folio }}</span>
+    </div>
     <div class="tk-actions">
       <a href="{{ url_for('user.dashboard') }}" class="btn-back">
         <i class="fas fa-arrow-left"></i> Volver
@@ -60,12 +84,11 @@ body{background:var(--page-bg)!important}
 
   <div class="layout">
 
-    {# Columna principal #}
+    {# ── Columna principal ── #}
     <div>
 
-      {# Info general #}
       <div class="tk-card">
-        <div class="tk-card-hdr"><i class="fas fa-info-circle"></i>Informacion del Ticket</div>
+        <div class="tk-card-hdr"><i class="fas fa-info-circle"></i>Información del Ticket</div>
         <div class="tk-card-body">
           <div class="tk-grid">
             <div>
@@ -77,10 +100,12 @@ body{background:var(--page-bg)!important}
               <span class="badge-pill" style="background:{{ ticket.color_prioridad }}">{{ ticket.prioridad }}</span>
             </div>
           </div>
+
           <div class="tk-field">
-            <div class="tk-lbl">Titulo</div>
-            <div class="tk-val" style="font-weight:600">{{ ticket.titulo }}</div>
+            <div class="tk-lbl">Título</div>
+            <div class="tk-val" style="font-size:15px;font-weight:700">{{ ticket.titulo }}</div>
           </div>
+
           <div class="tk-grid">
             <div>
               <div class="tk-lbl">Tipo de Problema</div>
@@ -91,31 +116,37 @@ body{background:var(--page-bg)!important}
               <div class="tk-val">{{ ticket.nombre_equipo or 'No especificado' }}</div>
             </div>
           </div>
+
           <div class="tk-field">
-            <div class="tk-lbl">Descripcion</div>
-            <div class="tk-val" style="line-height:1.6;white-space:pre-wrap">{{ ticket.descripcion }}</div>
+            <div class="tk-lbl">Descripción</div>
+            <div class="tk-val" style="line-height:1.7;white-space:pre-wrap;color:#334155">{{ ticket.descripcion }}</div>
           </div>
-          <div class="tk-grid">
+
+          <div class="tk-grid" style="margin-bottom:0">
             <div>
-              <div class="tk-lbl">Fecha de Creacion</div>
-              <div class="tk-val">{{ ticket.fecha_creacion }}</div>
+              <div class="tk-lbl">Fecha de Creación</div>
+              <div class="tk-val" style="font-family:monospace;font-size:12px">{{ ticket.fecha_creacion }}</div>
             </div>
             {% if ticket.nombre_tecnico %}
             <div>
-              <div class="tk-lbl">Tecnico Asignado</div>
-              <div class="tk-val"><i class="fas fa-user-cog" style="color:var(--teal)"></i> {{ ticket.nombre_tecnico }}</div>
+              <div class="tk-lbl">Técnico Asignado</div>
+              <div class="tk-val">
+                <span style="background:#f0fdf4;color:#15803d;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid #bbf7d0;display:inline-flex;align-items:center;gap:5px">
+                  <i class="fas fa-user-cog"></i> {{ ticket.nombre_tecnico }}
+                </span>
+              </div>
             </div>
             {% endif %}
           </div>
         </div>
       </div>
 
-      {# Solucion #}
+      {# ── Solución ── #}
       {% if ticket.solucion %}
       <div class="tk-card">
         <div class="tk-card-hdr" style="background:#f0fdf4;border-color:#bbf7d0">
           <i class="fas fa-check-circle" style="color:#16a34a"></i>
-          <span style="color:#15803d">Solucion Aplicada</span>
+          <span style="color:#15803d">Solución Aplicada</span>
         </div>
         <div class="tk-card-body">
           {% if ticket.nombre_tecnico %}
@@ -125,12 +156,12 @@ body{background:var(--page-bg)!important}
           </div>
           {% endif %}
           <div class="tk-field">
-            <div class="tk-lbl" style="color:#16a34a">Solucion</div>
-            <div class="tk-val" style="line-height:1.6;white-space:pre-wrap">{{ ticket.solucion }}</div>
+            <div class="tk-lbl" style="color:#16a34a">Solución</div>
+            <div class="tk-val" style="line-height:1.7;white-space:pre-wrap">{{ ticket.solucion }}</div>
           </div>
           {% if ticket.observaciones_tecnico %}
           <div class="tk-field">
-            <div class="tk-lbl">Observaciones del Tecnico</div>
+            <div class="tk-lbl">Observaciones del Técnico</div>
             <div class="tk-val" style="line-height:1.6">{{ ticket.observaciones_tecnico }}</div>
           </div>
           {% endif %}
@@ -143,12 +174,21 @@ body{background:var(--page-bg)!important}
       </div>
       {% endif %}
 
+      {# ── TIP de seguimiento ── #}
+      <div class="tip-box">
+        <div class="tip-box-icon"><i class="fas fa-lightbulb"></i></div>
+        <div class="tip-box-text">
+          <strong>¿Necesitas el proceso de seguimiento?</strong>
+          Descarga el PDF de este ticket para tener un comprobante con todos los detalles, fechas y estado actual. Puedes compartirlo con tu área o guardarlo como referencia.
+        </div>
+      </div>
+
     </div>
 
-    {# Sidebar historial #}
+    {# ── Sidebar historial ── #}
     <div class="tk-card">
       <div class="tk-card-hdr"><i class="fas fa-history"></i>Historial</div>
-      <div class="tk-card-body">
+      <div class="tk-card-body" style="max-height:520px;overflow-y:auto">
         {% if historial %}
           {% for evento in historial %}
           <div class="hist-item">

@@ -27,7 +27,7 @@ cd soporte-tecnico-dif/SOPORTE_TECNICO_DIF
 
 ## 🔐 Paso 2 — Crear el archivo .env
 
-El archivo `.env` **NO está en el repositorio** por seguridad.  
+El archivo `.env` **NO está en el repositorio** por seguridad.
 Créalo manualmente en la raíz del proyecto con este contenido:
 
 ```env

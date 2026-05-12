@@ -229,6 +229,29 @@ body{background:var(--page-bg)!important}
           </form>
         </div>
 
+        <div class="form-section" style="background:#fffbeb;border-color:#fde68a">
+          <div class="form-section-title"><i class="fas fa-flag"></i>Cambiar Prioridad</div>
+          <form method="POST" action="{{ url_for('admin.cambiar_prioridad', id_ticket=ticket.id_ticket) }}" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end">
+            <div>
+              <select name="prioridad" class="form-select" required>
+                {% set prio_colors = {'Baja':'#22c55e','Media':'#f59e0b','Alta':'#f97316','Crítica':'#ef4444'} %}
+                {% for p in ['Baja','Media','Alta','Crítica'] %}
+                <option value="{{ p }}" {% if p == ticket.prioridad %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="btn btn-warning" style="background:#f59e0b;border-color:#f59e0b">
+              <i class="fas fa-flag"></i> Cambiar
+            </button>
+          </form>
+          <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+            <span style="background:#22c55e;color:#fff;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:700">Baja</span>
+            <span style="background:#f59e0b;color:#fff;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:700">Media</span>
+            <span style="background:#f97316;color:#fff;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:700">Alta</span>
+            <span style="background:#ef4444;color:#fff;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:700">Crítica</span>
+          </div>
+        </div>
+
         {% if ticket.estado != 'Resuelto' %}
         <div class="form-section">
           <div class="form-section-title"><i class="fas fa-check-circle"></i>Agregar Solución</div>

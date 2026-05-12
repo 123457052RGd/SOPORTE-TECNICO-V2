@@ -203,6 +203,7 @@ body::before {
 .tec-chip {
   background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0;
   padding:3px 9px; border-radius:7px; font-size:11px; font-weight:700;
+  white-space:nowrap; display:inline-block;
 }
 .tec-none { color:#cbd5e1; font-size:15px; }
 
@@ -333,7 +334,7 @@ body::before {
               {% set ec={'Abierto':'b-abierto','En Proceso':'b-proceso','Resuelto':'b-resuelto','Cerrado':'b-cerrado'} %}
               <span class="b {{ ec.get(ticket.estado,'b-cerrado') }}">{{ ticket.estado }}</span>
             </td>
-            <td>
+            <td style="white-space:nowrap;min-width:130px">
               {% if ticket.nombre_tecnico %}
                 <span class="tec-chip">{{ ticket.nombre_tecnico }}</span>
               {% else %}
